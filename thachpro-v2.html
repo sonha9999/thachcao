@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThạchPro – Thi Công Thạch Cao & Vật Liệu Xây Dựng Chuyên Nghiệp TP.HCM</title>
+
+<!-- SEO META -->
+<meta name="description" content="ThạchPro – Đơn vị thi công thạch cao chuyên nghiệp tại TP.HCM. Trần phẳng, trần giật cấp, vách ngăn, phào chỉ. Cung cấp vật liệu Knauf, USG chính hãng. Bảo hành 24 tháng. Hotline: 0901 234 567">
+<meta name="keywords" content="thi công thạch cao, trần thạch cao TP HCM, vách ngăn thạch cao, trần giật cấp, phào chỉ thạch cao, vật liệu xây dựng, Knauf, USG, thạch cao Bình Dương, thi công nội thất">
+<meta name="author" content="ThạchPro">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://thachpro.vn/">
+
+<!-- Open Graph (Facebook, Zalo share) -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thachpro.vn/">
+<meta property="og:title" content="ThạchPro – Thi Công Thạch Cao Chuyên Nghiệp TP.HCM">
+<meta property="og:description" content="Thi công trần thạch cao, vách ngăn, phào chỉ. Cung cấp vật liệu Knauf, USG chính hãng. Bảo hành 24 tháng. Khảo sát miễn phí.">
+<meta property="og:image" content="https://thachpro.vn/og-image.jpg">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:site_name" content="ThạchPro">
+
+<!-- Schema.org Structured Data -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"LocalBusiness",
+  "name":"ThạchPro",
+  "description":"Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM",
+  "url":"https://thachpro.vn",
+  "telephone":"+84901234567",
+  "email":"thachpro@gmail.com",
+  "address":{"@type":"PostalAddress","streetAddress":"123 Nguyễn Văn Linh","addressLocality":"Quận 7","addressRegion":"TP. Hồ Chí Minh","postalCode":"700000","addressCountry":"VN"},
+  "geo":{"@type":"GeoCoordinates","latitude":10.7323,"longitude":106.7200},
+  "openingHours":"Mo-Su 07:00-18:00",
+  "priceRange":"₫₫",
+  "image":"https://thachpro.vn/og-image.jpg",
+  "sameAs":["https://facebook.com/thachpro","https://zalo.me/0901234567"]
+}
+</script>
+
+<!-- FONTS: Be Vietnam Pro (body) + Playfair Display (heading) — hỗ trợ tiếng Việt tốt -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+<style>
+/* FONT FALLBACK — nếu Google Fonts không load được, dùng font hệ thống đẹp */
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Segoe UI'), local('Helvetica Neue'), local('Arial');
+  unicode-range: U+0000-00FF;
+}
+</style>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --c0:#0A0B0D;--c1:#111318;--c2:#1C1F28;--c3:#262A36;
+  --accent:#E8A020;--accent2:#F5C842;
+  --text:#F0EDE6;--muted:#8A8680;--line:rgba(232,160,32,.15);--r:4px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--c0);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-weight:300;overflow-x:hidden;cursor:none}
+#cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .3s,height .3s}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(232,160,32,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,opacity .3s}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--c1)}::-webkit-scrollbar-thumb{background:var(--accent)}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:800;padding:1.25rem 5%;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
+#nav.scrolled{background:rgba(10,11,13,.92);backdrop-filter:blur(16px);padding:.9rem 5%;border-bottom:1px solid var(--line)}
+.logo-wrap{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.logo-text{font-family:'Be Vietnam Pro',sans-serif;font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-.02em}
+.logo-text span{color:var(--accent)}
+.nav-center{display:flex;gap:2.2rem;list-style:none}
+.nav-center a{color:var(--muted);text-decoration:none;font-size:.82rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;transition:color .25s;position:relative}
+.nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--accent);transition:width .3s}
+.nav-center a:hover{color:var(--text)}
+.nav-center a:hover::after{width:100%}
+.nav-right{display:flex;align-items:center;gap:1rem}
+.nav-phone{color:var(--accent);font-weight:600;font-size:.88rem;text-decoration:none}
+.btn-nav{background:var(--accent);color:var(--c0);border:none;padding:.6rem 1.5rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;cursor:none;text-transform:uppercase;transition:background .25s,transform .2s;text-decoration:none;display:inline-block}
+.btn-nav:hover{background:var(--accent2);transform:translateY(-1px)}
+
+/* HERO */
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;padding:0 5% 5rem}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(232,160,32,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(232,160,32,.04) 1px,transparent 1px);background-size:60px 60px;animation:gridPulse 8s ease-in-out infinite}
+@keyframes gridPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.hero-orb{position:absolute;top:-20%;right:-10%;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(232,160,32,.18) 0%,rgba(232,160,32,.04) 50%,transparent 70%);filter:blur(40px);animation:orbF 12s ease-in-out infinite}
+@keyframes orbF{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,15px)}}
+.hero-orb2{position:absolute;bottom:-10%;left:5%;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(232,160,32,.07) 0%,transparent 70%);filter:blur(60px);animation:orbF 16s ease-in-out infinite reverse}
+.hero-bignum{position:absolute;bottom:-2rem;right:3%;font-family:'Playfair Display',serif;font-size:clamp(12rem,22vw,22rem);color:rgba(232,160,32,.035);line-height:1;pointer-events:none;user-select:none}
+.hero-content{position:relative;z-index:2;display:grid;grid-template-columns:1fr auto;gap:4rem;align-items:flex-end}
+.hero-tag{display:inline-flex;align-items:center;gap:.6rem;background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.25);color:var(--accent);padding:.4rem 1rem;border-radius:999px;font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2rem;animation:fadeUp .8s .2s both}
+.dot{width:6px;height:6px;background:var(--accent);border-radius:50%;display:inline-block;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+h1.hero-title{font-family:'Playfair Display',serif;font-size:clamp(3.2rem,6vw,6.5rem);line-height:1.0;color:var(--text);margin-bottom:1.8rem;animation:fadeUp .8s .4s both}
+h1.hero-title em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.8;max-width:46ch;margin-bottom:2.5rem;animation:fadeUp .8s .6s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hero-btns{display:flex;gap:1rem;animation:fadeUp .8s .8s both;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:var(--c0);border:none;padding:1rem 2.4rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.05em;text-transform:uppercase;cursor:none;text-decoration:none;transition:background .25s,transform .2s,box-shadow .25s;display:inline-block}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(232,160,32,.3)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid rgba(240,237,230,.15);padding:1rem 2.4rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:600;font-size:.9rem;text-transform:uppercase;cursor:none;text-decoration:none;transition:border-color .25s;display:inline-block}
+.btn-ghost:hover{border-color:rgba(240,237,230,.4)}
+.hero-right{display:flex;flex-direction:column;gap:1.5rem;animation:fadeUp .8s 1s both}
+.stat-box{background:var(--c2);border:1px solid var(--line);border-radius:8px;padding:1.4rem 2rem;text-align:right;min-width:160px;transition:border-color .3s,transform .3s}
+.stat-box:hover{border-color:rgba(232,160,32,.4);transform:translateX(-4px)}
+.stat-num{font-family:'Playfair Display',serif;font-size:2.8rem;color:var(--accent);line-height:1}
+.stat-lbl{font-size:.75rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:.3rem}
+.scroll-ind{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;z-index:2;animation:fadeUp .8s 1.4s both}
+.scroll-ind span{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.scroll-line{width:1px;height:48px;background:linear-gradient(to bottom,var(--accent),transparent);animation:sLine 2s ease-in-out infinite}
+@keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* TICKER */
+.ticker{background:var(--accent);overflow:hidden;padding:.7rem 0}
+.ticker-track{display:flex;gap:3.5rem;animation:tick 30s linear infinite;flex-shrink:0;white-space:nowrap}
+.ticker-inner{display:flex}
+.ticker-item{display:inline-flex;align-items:center;gap:1rem;font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--c0);flex-shrink:0}
+.ticker-sep{color:rgba(10,11,13,.3);font-size:1.2rem}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* SECTION */
+section{padding:7rem 5%}
+.sec-eyebrow{display:inline-flex;align-items:center;gap:.7rem;font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.sec-eyebrow::before{content:'';width:24px;height:2px;background:var(--accent)}
+h2.sec-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,4vw,3.8rem);line-height:1.1;color:var(--text);margin-bottom:1rem}
+.sec-desc{font-size:1rem;color:var(--muted);line-height:1.85;max-width:52ch}
+
+/* SERVICES */
+#services{background:var(--c1);position:relative;overflow:hidden}
+#services::before{content:'SVC';position:absolute;top:50%;left:-1%;transform:translateY(-50%);font-family:'Playfair Display',serif;font-size:18rem;color:rgba(255,255,255,.012);pointer-events:none;line-height:1}
+.services-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4rem;flex-wrap:wrap;gap:2rem}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+.svc-card{background:var(--c1);padding:2.8rem 2.4rem;position:relative;overflow:hidden;transition:background .4s}
+.svc-card:hover{background:var(--c2)}
+.svc-card::after{content:'';position:absolute;left:0;bottom:0;width:100%;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.svc-card:hover::after{transform:scaleX(1)}
+.svc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem}
+.svc-ico{width:52px;height:52px;background:rgba(232,160,32,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:background .3s,transform .3s}
+.svc-card:hover .svc-ico{background:rgba(232,160,32,.2);transform:scale(1.08)}
+.svc-n{font-family:'Be Vietnam Pro',sans-serif;font-size:3rem;font-weight:800;color:rgba(232,160,32,.07);line-height:1}
+.svc-name{font-family:'Be Vietnam Pro',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:.8rem}
+.svc-desc{font-size:.87rem;color:var(--muted);line-height:1.75}
+.svc-price{margin-top:1.5rem;display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.05em}
+.svc-arrow{transition:transform .3s}.svc-card:hover .svc-arrow{transform:translateX(4px)}
+
+/* ABOUT */
+#about{background:var(--c0);display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:520px;padding:0}
+.about-visual{background:var(--c2);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2rem;padding:5rem}
+.about-ring-outer{width:240px;height:240px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;animation:spin 20s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.about-ring-inner{animation:spin 20s linear infinite reverse;background:var(--c2);width:180px;height:180px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line)}
+.arc-num{font-family:'Playfair Display',serif;font-size:3.5rem;color:var(--accent);line-height:1}
+.arc-lbl{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center}
+.about-badges{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center}
+.badge{background:var(--c3);border:1px solid var(--line);border-radius:999px;padding:.4rem 1rem;font-size:.72rem;font-weight:600;color:var(--text);letter-spacing:.06em}
+.about-text{padding:6rem 5%}
+.feat-list{margin-top:3rem;display:flex;flex-direction:column}
+.feat{display:flex;align-items:flex-start;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid var(--line)}
+.feat:last-child{border:none}
+.feat-ico{width:44px;height:44px;flex-shrink:0;background:rgba(232,160,32,.08);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:background .3s}
+.feat:hover .feat-ico{background:rgba(232,160,32,.18)}
+.feat-title{font-family:'Be Vietnam Pro',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.feat-desc{font-size:.85rem;color:var(--muted);line-height:1.7}
+
+/* GALLERY */
+#gallery{background:var(--c1);padding:5rem 5%}
+.gallery-filters{display:flex;gap:.5rem;margin-top:1.5rem;flex-wrap:wrap}
+.filter-btn{background:var(--c2);border:1px solid var(--line);color:var(--muted);padding:.45rem 1.1rem;border-radius:999px;font-size:.78rem;font-weight:600;cursor:none;transition:all .25s;letter-spacing:.05em}
+.filter-btn.active,.filter-btn:hover{background:var(--accent);border-color:var(--accent);color:var(--c0)}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:220px 220px;gap:1px;background:var(--line);margin-top:3rem}
+.g-item{background:var(--c2);position:relative;overflow:hidden;cursor:none}
+.g-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:6rem;transition:transform .6s ease}
+.g-item:hover .g-bg{transform:scale(1.1)}
+.g-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,11,13,.92) 0%,rgba(10,11,13,.3) 50%,transparent);opacity:0;transition:opacity .35s}
+.g-item:hover .g-overlay{opacity:1}
+.g-info{position:absolute;bottom:1.2rem;left:1.4rem;right:1.4rem;transform:translateY(8px);opacity:0;transition:all .35s}
+.g-item:hover .g-info{transform:translateY(0);opacity:1}
+.g-cat{font-size:.68rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.3rem;font-weight:700}
+.g-title{font-family:'Be Vietnam Pro',sans-serif;font-size:1rem;font-weight:700;color:var(--text)}
+.g-area{font-size:.78rem;color:var(--muted)}
+
+/* CALCULATOR */
+#calc{background:var(--c0);position:relative;overflow:hidden}
+#calc::before{content:'';position:absolute;top:0;right:0;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(232,160,32,.05) 0%,transparent 70%);pointer-events:none}
+.calc-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:5rem;align-items:start}
+.calc-form{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:2.5rem}
+.calc-title-bar{font-family:'Be Vietnam Pro',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:2rem;display:flex;align-items:center;gap:.7rem}
+.calc-title-bar::before{content:'';width:4px;height:20px;background:var(--accent);border-radius:2px}
+.form-row{margin-bottom:1.5rem}
+.form-label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem}
+.form-select,.form-input{width:100%;background:var(--c3);border:1px solid var(--line);color:var(--text);padding:.8rem 1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-size:.92rem;cursor:none;transition:border-color .25s;appearance:none}
+.form-select:focus,.form-input:focus{outline:none;border-color:var(--accent)}
+.form-select option{background:var(--c3)}
+.range-wrap{display:flex;flex-direction:column;gap:.6rem}
+.range-val{display:flex;justify-content:space-between;font-size:.85rem}
+.range-val span:last-child{color:var(--accent);font-weight:700;font-family:'Be Vietnam Pro',sans-serif}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--c3);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:none;border:2px solid var(--c0)}
+.calc-btn{width:100%;background:var(--accent);color:var(--c0);border:none;padding:1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;cursor:none;transition:background .25s}
+.calc-btn:hover{background:var(--accent2)}
+.calc-result{position:sticky;top:7rem}
+.result-box{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:2.5rem;margin-bottom:1.5rem;transition:border-color .4s}
+.result-box.active{border-color:rgba(232,160,32,.4)}
+.result-label{font-size:.75rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem}
+.result-price{font-family:'Playfair Display',serif;font-size:3rem;color:var(--accent);line-height:1}
+.result-unit{font-size:.85rem;color:var(--muted);margin-top:.3rem}
+.result-bd{margin-top:1.5rem;display:flex;flex-direction:column;gap:.8rem}
+.rb-item{display:flex;justify-content:space-between;align-items:center;font-size:.85rem}
+.rb-label{color:var(--muted)}.rb-val{color:var(--text);font-weight:600;font-family:'Be Vietnam Pro',sans-serif}
+.rb-div{height:1px;background:var(--line);margin:.3rem 0}
+.rb-total .rb-label{color:var(--text);font-weight:700}
+.rb-total .rb-val{color:var(--accent);font-size:1.1rem}
+.calc-note{background:rgba(232,160,32,.06);border:1px solid rgba(232,160,32,.15);border-radius:8px;padding:1.2rem 1.5rem;font-size:.82rem;color:var(--muted);line-height:1.7}
+.calc-note strong{color:var(--accent)}
+
+/* MATERIALS */
+#materials{background:var(--c1)}
+.mat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);margin-top:4rem}
+.mat-card{background:var(--c1);padding:2.2rem 1.8rem;position:relative;overflow:hidden;border-bottom:2px solid transparent;transition:all .35s}
+.mat-card:hover{background:var(--c2);border-bottom-color:var(--accent)}
+.mat-brand{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:.8rem}
+.mat-name{font-family:'Be Vietnam Pro',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:.6rem}
+.mat-desc{font-size:.83rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem}
+.mat-tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.mat-tag{background:rgba(232,160,32,.08);border:1px solid rgba(232,160,32,.15);color:var(--accent);padding:.2rem .7rem;border-radius:999px;font-size:.68rem;font-weight:600}
+.mat-ico-big{position:absolute;bottom:-1rem;right:-1rem;font-size:5rem;opacity:.06;transition:opacity .35s}
+.mat-card:hover .mat-ico-big{opacity:.12}
+
+/* PROCESS */
+#process{background:var(--c0)}
+.process-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:5rem;position:relative}
+.process-grid::before{content:'';position:absolute;top:2.5rem;left:calc(10% + 1.5rem);right:calc(10% + 1.5rem);height:1px;background:linear-gradient(to right,transparent,var(--line) 20%,var(--line) 80%,transparent)}
+.proc-step{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 1rem}
+.proc-num{width:48px;height:48px;border-radius:50%;background:var(--c2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);margin:0 auto 1.5rem;position:relative;z-index:1;transition:all .35s}
+.proc-step:hover .proc-num{background:var(--accent);border-color:var(--accent);color:var(--c0);transform:scale(1.15)}
+.proc-ico{font-size:1.5rem;margin-bottom:.8rem}
+.proc-name{font-family:'Be Vietnam Pro',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.proc-desc{font-size:.78rem;color:var(--muted);line-height:1.65}
+
+/* REVIEWS */
+#reviews{background:var(--c1)}
+.reviews-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3.5rem;flex-wrap:wrap;gap:1.5rem}
+.rating-big{display:flex;align-items:center;gap:1rem}
+.rating-num{font-family:'Playfair Display',serif;font-size:4rem;color:var(--accent);line-height:1}
+.r-stars{display:flex;flex-direction:column;gap:.3rem}
+.stars{color:var(--accent);font-size:1rem;letter-spacing:.08rem}
+.rating-sub{font-size:.75rem;color:var(--muted)}
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.review-card{background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:2.2rem;position:relative;overflow:hidden;transition:border-color .35s,transform .35s}
+.review-card:hover{border-color:rgba(232,160,32,.3);transform:translateY(-4px)}
+.review-q{position:absolute;top:1.2rem;right:1.8rem;font-family:'Playfair Display',serif;font-size:4rem;color:rgba(232,160,32,.1);line-height:1}
+.review-stars{font-size:.85rem;color:var(--accent);margin-bottom:1.2rem}
+.review-text{font-size:.88rem;color:var(--muted);line-height:1.8;margin-bottom:1.8rem;position:relative;z-index:1}
+.review-author{display:flex;align-items:center;gap:.9rem}
+.review-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8B6520);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:var(--c0);flex-shrink:0}
+.review-name{font-size:.88rem;font-weight:700;color:var(--text)}
+.review-role{font-size:.75rem;color:var(--muted)}
+.review-proj{font-size:.7rem;color:var(--accent);font-weight:600;letter-spacing:.06em;margin-top:.2rem}
+
+/* WHY */
+#why{background:var(--c0);padding:7rem 5%}
+.why-wrap{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:center}
+.why-visual{position:relative}
+.why-card-main{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:3rem;aspect-ratio:4/3;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+.why-card-main::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(232,160,32,.08) 0%,transparent 65%)}
+.why-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(232,160,32,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,160,32,.03) 1px,transparent 1px);background-size:30px 30px}
+.why-tag{font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;position:relative;z-index:1}
+.why-big{font-family:'Playfair Display',serif;font-size:3.5rem;color:var(--text);line-height:1.05;position:relative;z-index:1}
+.why-float{position:absolute;top:-1.5rem;right:-2rem;background:var(--accent);color:var(--c0);border-radius:10px;padding:1.2rem 1.6rem;font-family:'Be Vietnam Pro',sans-serif;font-weight:800}
+.why-float-num{font-size:2.2rem;line-height:1}
+.why-float-lbl{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.why-list{display:flex;flex-direction:column}
+.why-item{display:flex;align-items:flex-start;gap:1.3rem;padding:1.6rem 0;border-bottom:1px solid var(--line)}
+.why-item:last-child{border:none}
+.why-check{width:32px;height:32px;flex-shrink:0;background:rgba(232,160,32,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1rem;transition:background .3s}
+.why-item:hover .why-check{background:rgba(232,160,32,.22)}
+.why-item-title{font-family:'Be Vietnam Pro',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.why-item-desc{font-size:.84rem;color:var(--muted);line-height:1.7}
+
+/* CTA */
+#cta{background:var(--accent);padding:6rem 5%;position:relative;overflow:hidden}
+#cta::before{content:'';position:absolute;top:-50%;right:-5%;width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
+.cta-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:4rem;align-items:center}
+.cta-text h2{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.5rem);color:var(--c0);line-height:1.1;margin-bottom:1rem}
+.cta-text p{font-size:1rem;color:rgba(10,11,13,.65);line-height:1.7;max-width:52ch}
+.cta-actions{display:flex;flex-direction:column;gap:1rem;align-items:center;flex-shrink:0}
+.btn-cta-dark{background:var(--c0);color:var(--text);border:none;padding:1.1rem 2.5rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:.92rem;text-transform:uppercase;letter-spacing:.06em;cursor:none;text-decoration:none;display:inline-block;transition:transform .2s;white-space:nowrap}
+.btn-cta-dark:hover{transform:translateY(-2px)}
+.cta-phone-big{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--c0);text-align:center}
+.cta-time{font-size:.75rem;color:rgba(10,11,13,.55);letter-spacing:.1em;text-transform:uppercase;text-align:center}
+
+/* FOOTER */
+footer{background:var(--c0);border-top:1px solid var(--line);padding:5rem 5% 2.5rem}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:4rem;margin-bottom:4rem}
+.footer-brand .logo-wrap{margin-bottom:1.2rem}
+.footer-brand p{font-size:.84rem;color:var(--muted);line-height:1.8;max-width:30ch;margin-bottom:1.5rem}
+.social-row{display:flex;gap:.7rem}
+.social-btn{width:36px;height:36px;background:var(--c2);border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem;text-decoration:none;transition:all .25s;cursor:none}
+.social-btn:hover{background:var(--accent);border-color:var(--accent);color:var(--c0)}
+.footer-col h4{font-family:'Be Vietnam Pro',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:1.4rem}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:.8rem}
+.footer-col a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .25s}
+.footer-col a:hover{color:var(--text)}
+.fci{display:flex;align-items:flex-start;gap:.7rem;font-size:.84rem;color:var(--muted);margin-bottom:.8rem}
+.fci-ico{color:var(--accent);flex-shrink:0}
+.footer-bottom{border-top:1px solid var(--line);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-bottom p{font-size:.78rem;color:var(--muted)}
+.footer-bottom span{color:var(--accent)}
+.cert-row{display:flex;gap:.8rem}
+.cert-badge{background:var(--c2);border:1px solid var(--line);border-radius:4px;padding:.3rem .8rem;font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.05em}
+
+/* CONTACT FORM SECTION */
+#contact{background:var(--c1);padding:7rem 5%}
+.contact-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:5rem;align-items:start}
+.ci-item{display:flex;align-items:flex-start;gap:1.2rem;padding:1.4rem 0;border-bottom:1px solid var(--line)}
+.ci-item:last-of-type{border:none}
+.ci-icon{width:46px;height:46px;flex-shrink:0;background:rgba(232,160,32,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:background .3s}
+.ci-item:hover .ci-icon{background:rgba(232,160,32,.22)}
+.ci-label{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.25rem}
+.ci-val{font-size:.95rem;color:var(--text);font-weight:500}
+.ci-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.contact-form-box{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:2.8rem}
+.cf-title{font-family:'Be Vietnam Pro',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:2rem;display:flex;align-items:center;gap:.7rem}
+.cf-title::before{content:'';width:4px;height:20px;background:var(--accent);border-radius:2px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.cf-field{margin-bottom:1rem}
+.cf-label{display:block;font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem}
+.cf-input,.cf-select,.cf-textarea{width:100%;background:var(--c3);border:1px solid var(--line);color:var(--text);padding:.8rem 1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-size:.9rem;transition:border-color .25s;appearance:none}
+.cf-input:focus,.cf-select:focus,.cf-textarea:focus{outline:none;border-color:var(--accent)}
+.cf-select option{background:var(--c3)}
+.cf-textarea{resize:vertical;min-height:110px;line-height:1.6}
+.cf-submit{width:100%;background:var(--accent);color:var(--c0);border:none;padding:1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;cursor:none;transition:background .25s,transform .2s;margin-top:.5rem}
+.cf-submit:hover{background:var(--accent2);transform:translateY(-1px)}
+.cf-success{display:none;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:1rem 1.5rem;color:#4ade80;font-size:.9rem;text-align:center;margin-top:1rem}
+.cf-success.show{display:block}
+/* MAP */
+#map-section{background:var(--c0);padding:0}
+.map-wrap{position:relative}
+.map-frame{width:100%;height:420px;border:none;filter:grayscale(1) invert(1) contrast(.85) brightness(.7) saturate(.6);display:block}
+.map-card{position:absolute;top:2.5rem;left:5%;background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:1.8rem 2.2rem;z-index:10;min-width:260px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.map-card-title{font-family:'Be Vietnam Pro',sans-serif;font-size:1rem;font-weight:800;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.map-card-title span{color:var(--accent)}
+.map-info-row{display:flex;align-items:flex-start;gap:.7rem;font-size:.83rem;color:var(--muted);margin-bottom:.7rem;line-height:1.5}
+.map-ico{color:var(--accent);flex-shrink:0}
+.map-cta-btn{display:block;width:100%;background:var(--accent);color:var(--c0);text-decoration:none;text-align:center;padding:.7rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;margin-top:1.2rem;transition:background .25s}
+.map-cta-btn:hover{background:var(--accent2)}
+/* ZALO FLOAT */
+#zalo-float{position:fixed;bottom:2rem;right:2rem;z-index:700;display:flex;flex-direction:column;align-items:flex-end;gap:.7rem}
+.zf-row{display:flex;align-items:center;gap:.7rem}
+.zalo-btn{height:52px;padding:0 1.2rem;border-radius:999px;background:#0068FF;display:flex;align-items:center;justify-content:center;gap:.45rem;box-shadow:0 4px 20px rgba(0,104,255,.4);cursor:none;text-decoration:none;animation:zPulse 2.5s ease-in-out infinite;transition:transform .2s;flex-shrink:0;font-family:'Be Vietnam Pro',sans-serif;font-size:.82rem;font-weight:800;color:white;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.zalo-btn:hover{transform:scale(1.1)}
+@keyframes zPulse{0%,100%{box-shadow:0 4px 20px rgba(0,104,255,.4)}50%{box-shadow:0 4px 30px rgba(0,104,255,.75),0 0 0 8px rgba(0,104,255,.12)}}
+.zalo-btn svg{width:30px;height:30px;fill:white}
+.phone-btn{width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,160,32,.4);cursor:none;text-decoration:none;font-size:1.4rem;animation:phPulse 3s ease-in-out infinite;transition:transform .2s;flex-shrink:0}
+.phone-btn:hover{transform:scale(1.1)}
+@keyframes phPulse{0%,100%{box-shadow:0 4px 20px rgba(232,160,32,.4)}50%{box-shadow:0 4px 30px rgba(232,160,32,.7),0 0 0 8px rgba(232,160,32,.1)}}
+.zf-label{background:var(--c2);border:1px solid var(--line);color:var(--text);font-size:.74rem;font-weight:600;padding:.38rem .85rem;border-radius:999px;white-space:nowrap;opacity:0;transform:translateX(6px);transition:all .3s;pointer-events:none}
+#zalo-float:hover .zf-label{opacity:1;transform:translateX(0)}
+/* MOBILE NAV */
+.mobile-menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);width:38px;height:38px;border-radius:6px;cursor:none;font-size:1.1rem;align-items:center;justify-content:center}
+#mobile-menu{display:none;position:fixed;inset:0;background:rgba(10,11,13,.97);z-index:790;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;backdrop-filter:blur(8px)}
+#mobile-menu.open{display:flex}
+#mobile-menu a{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--text);text-decoration:none;transition:color .25s}
+#mobile-menu a:hover{color:var(--accent)}
+.mobile-close{position:absolute;top:1.5rem;right:1.5rem;background:none;border:1px solid var(--line);color:var(--text);width:40px;height:40px;border-radius:50%;cursor:none;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+@media(max-width:768px){
+  .mobile-menu-btn{display:flex}
+  .cf-row{grid-template-columns:1fr}
+  .contact-wrap{grid-template-columns:1fr}
+  .map-card{position:static;margin:0;border-radius:0}
+  .map-frame{height:300px}
+}
+/* REVEAL */
+.rv{opacity:0;transform:translateY(30px);transition:opacity .75s ease,transform .75s cubic-bezier(.16,1,.3,1)}
+.rv-l{opacity:0;transform:translateX(-30px);transition:opacity .75s ease,transform .75s cubic-bezier(.16,1,.3,1)}
+.rv-r{opacity:0;transform:translateX(30px);transition:opacity .75s ease,transform .75s cubic-bezier(.16,1,.3,1)}
+.rv.in,.rv-l.in,.rv-r.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}.d5{transition-delay:.5s}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .hero-content{grid-template-columns:1fr}
+  .hero-right{flex-direction:row}
+  #about{grid-template-columns:1fr}
+  .about-visual{display:none}
+  .calc-wrap{grid-template-columns:1fr}
+  .mat-grid{grid-template-columns:1fr 1fr}
+  .process-grid{grid-template-columns:repeat(3,1fr);gap:2rem}
+  .process-grid::before{display:none}
+  .reviews-grid{grid-template-columns:1fr 1fr}
+  .why-wrap{grid-template-columns:1fr}
+  .cta-inner{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:2.5rem}
+}
+@media(max-width:768px){
+  section{padding:5rem 5%}
+  .svc-grid{grid-template-columns:1fr}
+  .gallery-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+  .gallery-grid .g-item:nth-child(1){grid-column:span 2;grid-row:span 1}
+  .gallery-grid .g-item:nth-child(4){grid-column:span 1}
+  .mat-grid{grid-template-columns:1fr}
+  .process-grid{grid-template-columns:1fr 1fr}
+  .reviews-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr}
+  #nav .nav-center{display:none}
+  .hero-btns{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="logo-wrap">
+    <div class="logo-icon">🏠</div>
+    <span class="logo-text">Thạch<span>Pro</span></span>
+  </a>
+  <ul class="nav-center">
+    <li><a href="#services">Dịch Vụ</a></li>
+    <li><a href="#gallery">Công Trình</a></li>
+    <li><a href="#calc">Báo Giá</a></li>
+    <li><a href="#materials">Vật Liệu</a></li>
+    <li><a href="#reviews">Đánh Giá</a></li>
+    <li><a href="#contact">Liên Hệ</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="tel:0901234567" class="nav-phone">📞 0901 234 567</a>
+    <a href="#cta" class="btn-nav">Liên Hệ Ngay</a>
+    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.add('open')">☰</button>
+  </div>
+</nav>
+<!-- MOBILE MENU -->
+<div id="mobile-menu">
+  <button class="mobile-close" onclick="document.getElementById('mobile-menu').classList.remove('open')">✕</button>
+  <a href="#services" onclick="document.getElementById('mobile-menu').classList.remove('open')">Dịch Vụ</a>
+  <a href="#gallery" onclick="document.getElementById('mobile-menu').classList.remove('open')">Công Trình</a>
+  <a href="#calc" onclick="document.getElementById('mobile-menu').classList.remove('open')">Báo Giá</a>
+  <a href="#materials" onclick="document.getElementById('mobile-menu').classList.remove('open')">Vật Liệu</a>
+  <a href="#contact" onclick="document.getElementById('mobile-menu').classList.remove('open')">Liên Hệ</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-orb"></div>
+  <div class="hero-orb2"></div>
+  <div class="hero-bignum" data-key="hero_bignum">15</div>
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-tag"><span class="dot"></span> <span data-key="hero_tag">Đang nhận dự án — TP.HCM & Bình Dương</span></div>
+      <h1 class="hero-title" data-key="hero_title">Kiến Tạo<br>Không Gian<br><em>Hoàn Hảo</em></h1>
+      <p class="hero-sub" data-key="hero_sub">Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình.</p>
+      <div class="hero-btns">
+        <a href="#calc" class="btn-primary" data-key="hero_btn1">→ Nhận Báo Giá Miễn Phí</a>
+        <a href="#gallery" class="btn-ghost" data-key="hero_btn2">Xem Công Trình →</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="stat-box"><div class="stat-num" data-count="500" data-key="stat1_num">0+</div><div class="stat-lbl" data-key="stat1_lbl">Công trình hoàn thành</div></div>
+      <div class="stat-box"><div class="stat-num" data-count="15" data-key="stat2_num">0+</div><div class="stat-lbl" data-key="stat2_lbl">Năm kinh nghiệm</div></div>
+      <div class="stat-box"><div class="stat-num" data-count="98" data-key="stat3_num">0%</div><div class="stat-lbl" data-key="stat3_lbl">Khách hàng hài lòng</div></div>
+    </div>
+  </div>
+  <div class="scroll-ind"><span>Cuộn xuống</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <div class="ticker-track">
+      <div class="ticker-item">Trần Thạch Cao Phẳng <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Trần Giật Cấp <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Vách Ngăn Nhẹ <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Phào Chỉ Trang Trí <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Knauf · USG · Vĩnh Tường <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Khung Thép Mạ Kẽm <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Bả Bột & Sơn Nước <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Bảo Hành 24 Tháng <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Trần Thạch Cao Phẳng <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Trần Giật Cấp <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Vách Ngăn Nhẹ <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Phào Chỉ Trang Trí <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Knauf · USG · Vĩnh Tường <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Khung Thép Mạ Kẽm <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Bả Bột & Sơn Nước <span class="ticker-sep">✦</span></div>
+      <div class="ticker-item">Bảo Hành 24 Tháng <span class="ticker-sep">✦</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="services-head">
+    <div>
+      <div class="sec-eyebrow rv">Dịch Vụ</div>
+      <h2 class="sec-title rv d1">Thi Công Toàn Diện<br><em style="font-style:italic;color:var(--accent)">Đúng Chất Lượng</em></h2>
+    </div>
+    <p class="sec-desc rv d2">Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn.</p>
+  </div>
+  <div class="svc-grid rv">
+    <div class="svc-card">
+      <div class="svc-top"><div class="svc-ico">🏛️</div><div class="svc-n">01</div></div>
+      <div class="svc-name">Trần Thạch Cao Phẳng</div>
+      <div class="svc-desc">Thi công trần phẳng khung nổi & khung chìm. Bề mặt phẳng mịn tuyệt đối, che đường điện, điều hoà gọn gàng. Phù hợp căn hộ, văn phòng, nhà dân.</div>
+      <div class="svc-price">Từ 95.000đ/m² <span class="svc-arrow">→</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top"><div class="svc-ico">✨</div><div class="svc-n">02</div></div>
+      <div class="svc-name">Trần Giật Cấp Nghệ Thuật</div>
+      <div class="svc-desc">Thiết kế và thi công trần giật cấp 2–4 tầng, tích hợp hệ đèn LED âm trần, cắt chỉ nổi. Tạo chiều sâu không gian và điểm nhấn sang trọng.</div>
+      <div class="svc-price">Từ 145.000đ/m² <span class="svc-arrow">→</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top"><div class="svc-ico">🪟</div><div class="svc-n">03</div></div>
+      <div class="svc-name">Vách Ngăn Thạch Cao</div>
+      <div class="svc-desc">Vách ngăn khung thép mạ kẽm, tấm thạch cao tiêu chuẩn hoặc chống ẩm. Cách âm, cách nhiệt vượt trội. Linh hoạt bố cục không gian sống.</div>
+      <div class="svc-price">Từ 180.000đ/m² <span class="svc-arrow">→</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top"><div class="svc-ico">🎨</div><div class="svc-n">04</div></div>
+      <div class="svc-name">Phào Chỉ & Trang Trí</div>
+      <div class="svc-desc">Thi công phào chỉ thạch cao ốp tường, trần. Hoa văn cổ điển đến hiện đại, phào góc bo, gờ nổi. Hoàn thiện chi tiết tinh xảo.</div>
+      <div class="svc-price">Từ 120.000đ/md <span class="svc-arrow">→</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top"><div class="svc-ico">🖌️</div><div class="svc-n">05</div></div>
+      <div class="svc-name">Bả Bột & Sơn Nước</div>
+      <div class="svc-desc">Bả Matit 2–3 lớp, xử lý bề mặt trơn mịn hoàn hảo. Thi công sơn nước Dulux, Jotun, Kova nội ngoại thất. Màu sắc theo yêu cầu.</div>
+      <div class="svc-price">Từ 55.000đ/m² <span class="svc-arrow">→</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top"><div class="svc-ico">🏗️</div><div class="svc-n">06</div></div>
+      <div class="svc-name">Cung Cấp Vật Liệu</div>
+      <div class="svc-desc">Phân phối tấm thạch cao Knauf, USG, Vĩnh Tường; khung thép mạ kẽm; bông khoáng; phụ kiện. Giao tận công trình toàn TP.HCM, Bình Dương.</div>
+      <div class="svc-price">Giá sỉ tốt nhất <span class="svc-arrow">→</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-visual rv-l">
+    <div class="about-ring-outer">
+      <div class="about-ring-inner">
+        <div class="arc-num">15+</div>
+        <div class="arc-lbl">Năm<br>Kinh Nghiệm</div>
+      </div>
+    </div>
+    <div class="about-badges">
+      <div class="badge">Knauf Partner</div>
+      <div class="badge">ISO 9001</div>
+      <div class="badge">USG Authorized</div>
+      <div class="badge">Vĩnh Tường</div>
+    </div>
+  </div>
+  <div class="about-text rv-r">
+    <div class="sec-eyebrow">Về Chúng Tôi</div>
+    <h2 class="sec-title">Hơn 15 Năm<br>Xây Dựng Niềm Tin</h2>
+    <p class="sec-desc">ThạchPro được thành lập năm 2008, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.</p>
+    <div class="feat-list">
+      <div class="feat"><div class="feat-ico">🏆</div><div><div class="feat-title">Đội Ngũ Thợ Chuyên Nghiệp</div><div class="feat-desc">30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG.</div></div></div>
+      <div class="feat"><div class="feat-ico">📋</div><div><div class="feat-title">Báo Giá Minh Bạch</div><div class="feat-desc">Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng hạng mục, vật tư rõ ràng ngay từ đầu.</div></div></div>
+      <div class="feat"><div class="feat-ico">⚡</div><div><div class="feat-title">Tiến Độ Đúng Cam Kết</div><div class="feat-desc">Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày, không gây ảnh hưởng đến sinh hoạt.</div></div></div>
+      <div class="feat"><div class="feat-ico">🛡️</div><div><div class="feat-title">Bảo Hành 24 Tháng</div><div class="feat-desc">Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì miễn phí sau thời gian bảo hành.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="sec-eyebrow rv">Dự Án Tiêu Biểu</div>
+  <h2 class="sec-title rv d1">Công Trình Đã Thực Hiện</h2>
+  <div class="gallery-filters rv d2" id="gallery-filters">
+    <button class="filter-btn active" onclick="filterG(this,'all')">Tất Cả</button>
+    <button class="filter-btn" onclick="filterG(this,'Căn Hộ')">Căn Hộ</button>
+    <button class="filter-btn" onclick="filterG(this,'Văn Phòng')">Văn Phòng</button>
+    <button class="filter-btn" onclick="filterG(this,'Biệt Thự')">Biệt Thự</button>
+    <button class="filter-btn" onclick="filterG(this,'Khách Sạn')">Khách Sạn</button>
+    <button class="filter-btn" onclick="filterG(this,'Thương Mại')">Thương Mại</button>
+  </div>
+
+  <!-- Loading state -->
+  <div id="gallery-loading" style="text-align:center;padding:4rem;color:var(--muted);font-size:.95rem">
+    <div style="font-size:2rem;margin-bottom:1rem;animation:spin 1s linear infinite;display:inline-block">⟳</div><br>
+    Đang tải công trình...
+  </div>
+
+  <!-- Empty state -->
+  <div id="gallery-empty" style="display:none;text-align:center;padding:4rem;color:var(--muted)">
+    <div style="font-size:3rem;margin-bottom:1rem">🏗️</div>
+    <div style="font-size:1rem;margin-bottom:.5rem;color:var(--text)">Chưa có công trình nào</div>
+    <div style="font-size:.85rem">Vào trang Admin để thêm công trình đầu tiên</div>
+  </div>
+
+  <!-- Dynamic grid -->
+  <div class="gallery-grid rv d3" id="gallery-grid" style="display:none"></div>
+</section>
+
+<!-- CALCULATOR -->
+<section id="calc">
+  <div class="sec-eyebrow rv">Công Cụ</div>
+  <h2 class="sec-title rv d1">Tính Chi Phí <em style="color:var(--accent);font-style:italic">Ngay & Luôn</em></h2>
+  <p class="sec-desc rv d2" style="margin-bottom:4rem">Nhập thông tin để nhận ước tính chi phí nhanh. Báo giá chính xác sau khi khảo sát thực tế miễn phí.</p>
+  <div class="calc-wrap rv">
+    <div class="calc-form">
+      <div class="calc-title-bar">Thông Tin Công Trình</div>
+      <div class="form-row">
+        <label class="form-label">Loại Dịch Vụ</label>
+        <select class="form-select" id="svcType" onchange="calcP()">
+          <option value="95000">Trần Thạch Cao Phẳng (từ 95.000đ/m²)</option>
+          <option value="145000">Trần Giật Cấp (từ 145.000đ/m²)</option>
+          <option value="180000">Vách Ngăn Thạch Cao (từ 180.000đ/m²)</option>
+          <option value="120000">Phào Chỉ Trang Trí (từ 120.000đ/md)</option>
+          <option value="55000">Bả Bột & Sơn Nước (từ 55.000đ/m²)</option>
+          <option value="0">Trọn Gói Nhiều Hạng Mục</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Diện Tích (m²)</label>
+        <div class="range-wrap">
+          <div class="range-val"><span>Diện tích</span><span id="areaVal">50 m²</span></div>
+          <input type="range" min="10" max="1000" value="50" step="5" oninput="upA(this)" onchange="calcP()">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Chất Lượng Vật Liệu</label>
+        <select class="form-select" id="matQ" onchange="calcP()">
+          <option value="1.0">Tiêu Chuẩn</option>
+          <option value="1.3">Cao Cấp (Knauf, USG)</option>
+          <option value="1.6">Premium (Chống Ẩm / Chống Cháy)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Loại Công Trình</label>
+        <select class="form-select" id="buildT" onchange="calcP()">
+          <option value="1.0">Căn Hộ / Nhà Phố</option>
+          <option value="1.1">Văn Phòng / Thương Mại</option>
+          <option value="1.2">Biệt Thự / Cao Cấp</option>
+          <option value="0.95">Nhà Xưởng / Kho Bãi</option>
+        </select>
+      </div>
+      <button class="calc-btn" onclick="calcP()">🔢 Tính Chi Phí Ngay</button>
+    </div>
+    <div class="calc-result">
+      <div class="result-box" id="rBox">
+        <div class="result-label">Ước Tính Chi Phí Nhân Công</div>
+        <div class="result-price" id="rPrice">4.750.000đ</div>
+        <div class="result-unit">Chưa bao gồm VAT & vật liệu</div>
+        <div class="result-bd">
+          <div class="rb-item"><span class="rb-label">Diện tích</span><span class="rb-val" id="rb1">50 m²</span></div>
+          <div class="rb-item"><span class="rb-label">Đơn giá nhân công</span><span class="rb-val" id="rb2">95.000đ/m²</span></div>
+          <div class="rb-item"><span class="rb-label">Hệ số vật liệu</span><span class="rb-val" id="rb3">× 1.0</span></div>
+          <div class="rb-item"><span class="rb-label">Hệ số công trình</span><span class="rb-val" id="rb4">× 1.0</span></div>
+          <div class="rb-div"></div>
+          <div class="rb-item rb-total"><span class="rb-label">Tổng ước tính</span><span class="rb-val" id="rb5">4.750.000đ</span></div>
+        </div>
+      </div>
+      <div class="calc-note"><strong>⚠️ Lưu ý:</strong> Đây là ước tính tham khảo. Chi phí thực tế phụ thuộc vào hiện trạng công trình và độ phức tạp thiết kế. <strong>Liên hệ để được khảo sát và báo giá chính xác miễn phí.</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- MATERIALS -->
+<section id="materials">
+  <div class="sec-eyebrow rv">Vật Liệu</div>
+  <h2 class="sec-title rv d1">Nguồn Hàng Chính Hãng</h2>
+  <p class="sec-desc rv d2" style="margin-bottom:0">Phân phối trực tiếp từ nhà sản xuất và nhập khẩu ủy quyền. Đảm bảo nguồn gốc rõ ràng, đầy đủ CO/CQ.</p>
+  <div class="mat-grid rv">
+    <div class="mat-card"><div class="mat-ico-big">🧱</div><div class="mat-brand">Knauf · USG · Vĩnh Tường</div><div class="mat-name">Tấm Thạch Cao Tiêu Chuẩn</div><div class="mat-desc">Tấm 9mm, 12mm, 15mm. Dùng cho trần phẳng, trần thả, vách ngăn thông thường.</div><div class="mat-tags"><span class="mat-tag">9.5mm</span><span class="mat-tag">12mm</span><span class="mat-tag">15mm</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">💧</div><div class="mat-brand">Knauf Aquapanel</div><div class="mat-name">Tấm Thạch Cao Chống Ẩm</div><div class="mat-desc">Lõi thạch cao phụ gia chống ẩm đặc biệt. Dùng cho phòng tắm, bếp, khu vực ẩm ướt.</div><div class="mat-tags"><span class="mat-tag">Chống Ẩm</span><span class="mat-tag">12mm</span><span class="mat-tag">Xanh Lá</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">🔥</div><div class="mat-brand">USG Sheetrock</div><div class="mat-name">Tấm Thạch Cao Chống Cháy</div><div class="mat-desc">Lõi chứa Micro Silica & sợi thủy tinh. Đạt tiêu chuẩn chống cháy PCCC quốc tế.</div><div class="mat-tags"><span class="mat-tag">Chống Cháy</span><span class="mat-tag">REI 60</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">🔩</div><div class="mat-brand">Vĩnh Tường · Gyproc</div><div class="mat-name">Khung Thép Mạ Kẽm</div><div class="mat-desc">Thanh C, U, V mạ kẽm nhúng nóng dày 0.45–0.55mm. Chống gỉ, bền 30 năm.</div><div class="mat-tags"><span class="mat-tag">Thanh C</span><span class="mat-tag">Thanh U</span><span class="mat-tag">Mạ Kẽm</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">🌡️</div><div class="mat-brand">Rockwool · Isover</div><div class="mat-name">Bông Khoáng Cách Nhiệt</div><div class="mat-desc">Bông khoáng mật độ cao. Cách nhiệt & cách âm vượt trội, không cháy lan.</div><div class="mat-tags"><span class="mat-tag">Cách Âm</span><span class="mat-tag">Cách Nhiệt</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">🎨</div><div class="mat-brand">Dulux · Jotun · Kova</div><div class="mat-name">Bột Bả & Sơn Nước</div><div class="mat-desc">Bột trét Matit, Sika. Sơn nội ngoại thất cao cấp. Đủ màu theo NCS, RAL, Pantone.</div><div class="mat-tags"><span class="mat-tag">Nội Thất</span><span class="mat-tag">Ngoại Thất</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">🔧</div><div class="mat-brand">Hilti · Fischer · Knauf</div><div class="mat-name">Phụ Kiện Thi Công</div><div class="mat-desc">Vít, băng lưới, hợp chất trám khe, kẹp trần, ty treo, nẹp góc inox chuyên dụng.</div><div class="mat-tags"><span class="mat-tag">Vít</span><span class="mat-tag">Băng Lưới</span><span class="mat-tag">Nẹp Góc</span></div></div>
+    <div class="mat-card"><div class="mat-ico-big">🚚</div><div class="mat-brand">Giao Hàng Toàn TP.HCM</div><div class="mat-name">Mua Sỉ & Lẻ</div><div class="mat-desc">Giá sỉ ưu đãi từ 100m². Giao hàng trong ngày tại TP.HCM, Bình Dương, Long An.</div><div class="mat-tags"><span class="mat-tag">Trong Ngày</span><span class="mat-tag">Giá Sỉ</span><span class="mat-tag">COD</span></div></div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <div style="text-align:center">
+    <div class="sec-eyebrow rv" style="justify-content:center">Quy Trình</div>
+    <h2 class="sec-title rv d1" style="text-align:center">5 Bước Đến Công Trình Hoàn Hảo</h2>
+  </div>
+  <div class="process-grid rv d2">
+    <div class="proc-step"><div class="proc-num">01</div><div class="proc-ico">📞</div><div class="proc-name">Liên Hệ & Tư Vấn</div><div class="proc-desc">Gọi hotline hoặc nhắn Zalo. Tư vấn sơ bộ giải pháp và vật liệu phù hợp.</div></div>
+    <div class="proc-step"><div class="proc-num">02</div><div class="proc-ico">📐</div><div class="proc-name">Khảo Sát Miễn Phí</div><div class="proc-desc">Đội kỹ thuật đến đo đạc, đánh giá thực tế trong 24 giờ. Hoàn toàn miễn phí.</div></div>
+    <div class="proc-step"><div class="proc-num">03</div><div class="proc-ico">📋</div><div class="proc-name">Báo Giá & Ký HĐ</div><div class="proc-desc">Báo giá chi tiết từng hạng mục. Ký hợp đồng cam kết tiến độ & chất lượng.</div></div>
+    <div class="proc-step"><div class="proc-num">04</div><div class="proc-ico">⚒️</div><div class="proc-name">Thi Công Chuyên Nghiệp</div><div class="proc-desc">Đội thợ làm việc đúng tiến độ. Dọn dẹp sạch sẽ hàng ngày, báo cáo tiến độ.</div></div>
+    <div class="proc-step"><div class="proc-num">05</div><div class="proc-ico">✅</div><div class="proc-name">Bàn Giao & Bảo Hành</div><div class="proc-desc">Nghiệm thu kỹ lưỡng. Bảo hành 24 tháng. Hỗ trợ bảo trì trọn đời.</div></div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section id="reviews">
+  <div class="reviews-head">
+    <div><div class="sec-eyebrow rv">Khách Hàng Nói Gì</div><h2 class="sec-title rv d1">Đánh Giá Thực Tế</h2></div>
+    <div class="rating-big rv"><div class="rating-num">4.9</div><div class="r-stars"><div class="stars">★★★★★</div><div class="rating-sub">Dựa trên 200+ đánh giá</div></div></div>
+  </div>
+  <div class="reviews-grid rv">
+    <div class="review-card"><div class="review-q">"</div><div class="review-stars">★★★★★</div><p class="review-text">ThạchPro hoàn thành toàn bộ trần giật cấp và vách ngăn penthouse 450m² chỉ trong 10 ngày. Bề mặt cực kỳ mịn, đường nét sắc sảo, đội thợ sạch sẽ và chuyên nghiệp. Rất hài lòng và sẽ giới thiệu cho bạn bè!</p><div class="review-author"><div class="review-av">TT</div><div><div class="review-name">Anh Nguyễn Văn Tuấn</div><div class="review-role">Chủ hộ Vinhomes Grand Park</div><div class="review-proj">🏠 Căn hộ 450m² · Trần giật cấp</div></div></div></div>
+    <div class="review-card"><div class="review-q">"</div><div class="review-stars">★★★★★</div><p class="review-text">Đội thợ rất chuyên nghiệp, đúng giờ và sạch sẽ. Báo giá minh bạch, không phát sinh. Văn phòng 1.200m² được hoàn thiện đúng theo bản vẽ thiết kế, chất lượng vượt kỳ vọng của ban lãnh đạo.</p><div class="review-author"><div class="review-av">NH</div><div><div class="review-name">Chị Trần Hồng Nhung</div><div class="review-role">Giám đốc Công ty TechViet</div><div class="review-proj">🏢 Văn phòng 1.200m² · Quận 1</div></div></div></div>
+    <div class="review-card"><div class="review-q">"</div><div class="review-stars">★★★★★</div><p class="review-text">Mua vật liệu số lượng lớn cho dự án 300 căn hộ. Hàng đúng chủng loại, giao đúng hẹn, giá tốt hơn các đại lý khác. Dịch vụ hậu mãi cũng rất tốt. Sẽ tiếp tục hợp tác dài hạn.</p><div class="review-author"><div class="review-av">MK</div><div><div class="review-name">Anh Lê Minh Khoa</div><div class="review-role">Nhà thầu xây dựng, Bình Dương</div><div class="review-proj">🏗️ Dự án 300 căn hộ · Vật liệu sỉ</div></div></div></div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="why">
+  <div class="why-wrap">
+    <div class="why-visual rv-l">
+      <div class="why-card-main">
+        <div class="why-grid-bg"></div>
+        <div class="why-tag">Cam kết chất lượng</div>
+        <div class="why-big">Tại Sao<br>Chọn<br>ThạchPro?</div>
+      </div>
+      <div class="why-float"><div class="why-float-num">500+</div><div class="why-float-lbl">Công Trình<br>Hoàn Thành</div></div>
+    </div>
+    <div class="rv-r">
+      <div class="sec-eyebrow">Điểm Khác Biệt</div>
+      <h2 class="sec-title">Chúng Tôi Cam Kết<br>Điều Này</h2>
+      <div class="why-list">
+        <div class="why-item"><div class="why-check">✓</div><div><div class="why-item-title">Khảo Sát & Tư Vấn Miễn Phí 100%</div><div class="why-item-desc">Đội kỹ thuật đến tận nơi đo đạc, tư vấn giải pháp tối ưu. Không mất bất kỳ chi phí nào.</div></div></div>
+        <div class="why-item"><div class="why-check">✓</div><div><div class="why-item-title">Báo Giá Trọn Gói Không Phát Sinh</div><div class="why-item-desc">Hợp đồng rõ ràng từng hạng mục. Cam kết không phát sinh chi phí ngoài thỏa thuận ban đầu.</div></div></div>
+        <div class="why-item"><div class="why-check">✓</div><div><div class="why-item-title">Đội Thợ Được Đào Tạo Bài Bản</div><div class="why-item-desc">30+ thợ lành nghề chuyên về thạch cao, được đào tạo kỹ thuật theo tiêu chuẩn Knauf & USG.</div></div></div>
+        <div class="why-item"><div class="why-check">✓</div><div><div class="why-item-title">Bảo Hành 24 Tháng Toàn Bộ Hạng Mục</div><div class="why-item-desc">Bảo hành dài nhất trong ngành. Hỗ trợ bảo trì sau bảo hành với chi phí ưu đãi.</div></div></div>
+        <div class="why-item"><div class="why-check">✓</div><div><div class="why-item-title">Vật Liệu Chính Hãng Có Chứng Nhận</div><div class="why-item-desc">Chỉ sử dụng vật liệu có CO/CQ đầy đủ. Đại lý ủy quyền Knauf, USG, Vĩnh Tường.</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="cta-text rv"><h2>Bắt Đầu Dự Án<br>Của Bạn Hôm Nay</h2><p>Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.</p></div>
+    <div class="cta-actions rv d2">
+      <a href="tel:0901234567" class="btn-cta-dark">📞 Gọi Ngay: 0901 234 567</a>
+      <div class="cta-phone-big">0901 234 567</div>
+      <div class="cta-time">Thứ 2 – Chủ Nhật · 7:00 – 18:00</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT FORM -->
+<section id="contact">
+  <div class="sec-eyebrow rv">Liên Hệ</div>
+  <h2 class="sec-title rv d1">Đặt Lịch Khảo Sát<br><em style="color:var(--accent);font-style:italic">Miễn Phí</em></h2>
+  <p class="sec-desc rv d2" style="margin-bottom:4rem">Điền form bên dưới — đội kỹ thuật sẽ liên hệ lại trong vòng <strong style="color:var(--accent)">30 phút</strong> để sắp xếp lịch khảo sát.</p>
+  <div class="contact-wrap rv">
+    <!-- INFO -->
+    <div>
+      <div class="ci-item">
+        <div class="ci-icon">📞</div>
+        <div>
+          <div class="ci-label">Hotline</div>
+          <div class="ci-val" data-key="contact_phone">0901 234 567</div>
+          <div class="ci-sub" data-key="contact_hours">Thứ 2 – Chủ Nhật · 7:00 – 18:00</div>
+        </div>
+      </div>
+      <div class="ci-item">
+        <div class="ci-icon">💬</div>
+        <div>
+          <div class="ci-label">Zalo</div>
+          <div class="ci-val" data-key="contact_zalo">0901 234 567</div>
+          <div class="ci-sub">Nhắn tin nhận báo giá nhanh trong ngày</div>
+        </div>
+      </div>
+      <div class="ci-item">
+        <div class="ci-icon">📧</div>
+        <div>
+          <div class="ci-label">Email</div>
+          <div class="ci-val" data-key="contact_email">thachpro@gmail.com</div>
+          <div class="ci-sub">Phản hồi trong 2 giờ làm việc</div>
+        </div>
+      </div>
+      <div class="ci-item">
+        <div class="ci-icon">📍</div>
+        <div>
+          <div class="ci-label">Showroom & Văn Phòng</div>
+          <div class="ci-val">123 Nguyễn Văn Linh, Quận 7</div>
+          <div class="ci-sub">TP. Hồ Chí Minh · Gần cầu Kênh Tẻ</div>
+        </div>
+      </div>
+      <div class="ci-item">
+        <div class="ci-icon">🚚</div>
+        <div>
+          <div class="ci-label">Khu Vực Phục Vụ</div>
+          <div class="ci-val">TP.HCM · Bình Dương · Long An</div>
+          <div class="ci-sub">Khảo sát và giao hàng tận nơi miễn phí</div>
+        </div>
+      </div>
+    </div>
+    <!-- FORM -->
+    <div class="contact-form-box">
+      <div class="cf-title">Gửi Yêu Cầu Báo Giá</div>
+      <div class="cf-row">
+        <div class="cf-field">
+          <label class="cf-label">Họ & Tên *</label>
+          <input class="cf-input" type="text" id="cf-name" placeholder="Nguyễn Văn A" required>
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Số Điện Thoại *</label>
+          <input class="cf-input" type="tel" id="cf-phone" placeholder="0901 234 567" required>
+        </div>
+      </div>
+      <div class="cf-row">
+        <div class="cf-field">
+          <label class="cf-label">Email</label>
+          <input class="cf-input" type="email" id="cf-email" placeholder="email@gmail.com">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Dịch Vụ Quan Tâm</label>
+          <select class="cf-select" id="cf-service">
+            <option value="">-- Chọn dịch vụ --</option>
+            <option>Trần Thạch Cao Phẳng</option>
+            <option>Trần Giật Cấp</option>
+            <option>Vách Ngăn Thạch Cao</option>
+            <option>Phào Chỉ Trang Trí</option>
+            <option>Bả Bột & Sơn Nước</option>
+            <option>Mua Vật Liệu Sỉ/Lẻ</option>
+            <option>Tư Vấn Trọn Gói</option>
+          </select>
+        </div>
+      </div>
+      <div class="cf-row">
+        <div class="cf-field">
+          <label class="cf-label">Diện Tích (m²)</label>
+          <input class="cf-input" type="text" id="cf-area" placeholder="VD: 50 m²">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Địa Điểm Công Trình</label>
+          <input class="cf-input" type="text" id="cf-address" placeholder="Quận / Huyện, TP.HCM">
+        </div>
+      </div>
+      <div class="cf-field">
+        <label class="cf-label">Ghi Chú / Yêu Cầu Thêm</label>
+        <textarea class="cf-textarea" id="cf-note" placeholder="Mô tả thêm yêu cầu của bạn, thời gian thuận tiện để khảo sát..."></textarea>
+      </div>
+      <button class="cf-submit" onclick="submitForm()">📩 Gửi Yêu Cầu Báo Giá</button>
+      <div class="cf-success" id="cf-success">✅ Gửi thành công! Chúng tôi sẽ liên hệ lại trong vòng 30 phút. Cảm ơn bạn đã tin tưởng ThạchPro!</div>
+    </div>
+  </div>
+</section>
+
+<!-- GOOGLE MAPS -->
+<section id="map-section">
+  <div class="map-wrap">
+    <iframe
+      class="map-frame"
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0282977647386!2d106.71720767587655!3d10.732498089396068!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f9ab4c3a6bf%3A0x4a8a7e5db1d31e1!2zTmd1eeG7hW4gVsSDbiBMaW5oLCBRdeG6rW4gNywgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5o!5e0!3m2!1svi!2svn!4v1700000000000"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      title="Vị trí ThạchPro">
+    </iframe>
+    <div class="map-card">
+      <div class="map-card-title">📍 <span>ThạchPro</span> Showroom</div>
+      <div class="map-info-row"><span class="map-ico">🏠</span><span>123 Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP.HCM</span></div>
+      <div class="map-info-row"><span class="map-ico">📞</span><span>0901 234 567</span></div>
+      <div class="map-info-row"><span class="map-ico">🕐</span><span>7:00 – 18:00 · Thứ 2 – Chủ Nhật</span></div>
+      <div class="map-info-row"><span class="map-ico">🚗</span><span>Có bãi đậu xe miễn phí</span></div>
+      <a href="https://maps.google.com/?q=Nguyễn+Văn+Linh+Quận+7+TP.HCM" target="_blank" class="map-cta-btn">🗺️ Xem Trên Google Maps</a>
+    </div>
+  </div>
+</section>
+
+<!-- ZALO + PHONE FLOAT -->
+<div id="zalo-float">
+  <div class="zf-row">
+    <span class="zf-label">Gọi ngay</span>
+    <a href="tel:0901234567" class="phone-btn" title="Gọi điện ngay">📞</a>
+  </div>
+  <div class="zf-row">
+    <a href="https://zalo.me/0901234567" target="_blank" class="zalo-btn" title="Chat Zalo">
+      <span style="background:white;color:#0068FF;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;flex-shrink:0">Z</span>
+      Chat Zalo
+    </a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="logo-wrap"><div class="logo-icon">🏠</div><span class="logo-text">Thạch<span>Pro</span></span></a>
+      <p data-key="footer_desc">Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.</p>
+      <div class="social-row">
+        <a href="#" class="social-btn" data-key="social_fb">f</a>
+        <a href="#" class="social-btn">Z</a>
+        <a href="#" class="social-btn">▶</a>
+        <a href="#" class="social-btn">♪</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Dịch Vụ</h4>
+      <ul>
+        <li><a href="#services">→ Trần Thạch Cao Phẳng</a></li>
+        <li><a href="#services">→ Trần Giật Cấp</a></li>
+        <li><a href="#services">→ Vách Ngăn Nhẹ</a></li>
+        <li><a href="#services">→ Phào Chỉ Trang Trí</a></li>
+        <li><a href="#services">→ Bả Bột & Sơn Nước</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Vật Liệu</h4>
+      <ul>
+        <li><a href="#materials">→ Tấm Thạch Cao Knauf</a></li>
+        <li><a href="#materials">→ Tấm Thạch Cao USG</a></li>
+        <li><a href="#materials">→ Khung Thép Mạ Kẽm</a></li>
+        <li><a href="#materials">→ Bông Khoáng</a></li>
+        <li><a href="#materials">→ Bột Bả & Sơn Nước</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Liên Hệ</h4>
+      <div class="fci"><span class="fci-ico">📞</span><div><strong data-key="contact_phone">0901 234 567</strong><br><small data-key="contact_hours">Hotline 7:00–18:00</small></div></div>
+      <div class="fci"><span class="fci-ico">💬</span><div data-key="contact_zalo">Zalo: 0901 234 567</div></div>
+      <div class="fci"><span class="fci-ico">📧</span><div data-key="contact_email">thachpro@gmail.com</div></div>
+      <div class="fci"><span class="fci-ico">📍</span><div data-key="contact_address">123 Nguyễn Văn Linh, Quận 7, TP.HCM</div></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 <span data-key="brand_name">ThạchPro</span>. Tất cả quyền được bảo lưu.</p>
+    <div class="cert-row"><div class="cert-badge">Knauf Partner</div><div class="cert-badge">USG Authorized</div><div class="cert-badge">ISO 9001</div></div>
+  </div>
+</footer>
+
+<script>
+// CURSOR
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function anim(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim)})();
+document.querySelectorAll('a,button,select,input').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';ring.style.width='50px';ring.style.height='50px'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';ring.style.width='36px';ring.style.height='36px'});
+});
+
+// NAV SCROLL
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>60));
+
+// SCROLL REVEAL
+const obs=new IntersectionObserver(entries=>entries.forEach((e,i)=>{
+  if(e.isIntersecting){setTimeout(()=>e.target.classList.add('in'),i*50);obs.unobserve(e.target)}
+}),{threshold:.1});
+document.querySelectorAll('.rv,.rv-l,.rv-r').forEach(el=>obs.observe(el));
+
+// COUNTER
+function animC(el){
+  const t=+el.dataset.count;
+  const suf=el.textContent.slice(-1);
+  let n=0,step=t/60;
+  const iv=setInterval(()=>{n+=step;if(n>=t){n=t;clearInterval(iv)}el.textContent=Math.floor(n)+suf},20);
+}
+const cObs=new IntersectionObserver(e=>e.forEach(e=>{if(e.isIntersecting){animC(e.target);cObs.unobserve(e.target)}}),{threshold:.5});
+document.querySelectorAll('[data-count]').forEach(el=>cObs.observe(el));
+
+// CALCULATOR
+function fmt(n){return n.toLocaleString('vi-VN')+'đ'}
+function upA(el){document.getElementById('areaVal').textContent=el.value+' m²';calcP()}
+function calcP(){
+  const svc=+document.getElementById('svcType').value||0;
+  const area=+document.querySelector('input[type=range]').value;
+  const mat=+document.getElementById('matQ').value;
+  const build=+document.getElementById('buildT').value;
+  if(!svc){document.getElementById('rPrice').textContent='Liên hệ báo giá';return}
+  const total=Math.round(svc*area*mat*build);
+  document.getElementById('rPrice').textContent=fmt(total);
+  document.getElementById('rb1').textContent=area+' m²';
+  document.getElementById('rb2').textContent=fmt(svc)+'/m²';
+  document.getElementById('rb3').textContent='× '+mat;
+  document.getElementById('rb4').textContent='× '+build;
+  document.getElementById('rb5').textContent=fmt(total);
+  document.getElementById('rBox').classList.add('active');
+}
+calcP();
+
+// GALLERY — Load từ Google Sheet
+const API_URL = 'https://script.google.com/macros/s/AKfycbzMuam393Ao4cePF-TJdnUfFKUnFZ7F8e-uz5EK1BZ65oUtlHRgrra1rtbN32ukX6yv/exec';
+let allItems = [];
+let currentCat = 'all';
+
+const CAT_EMOJI = {
+  'Căn Hộ':'🏙️','Văn Phòng':'🏢','Biệt Thự':'🏠',
+  'Khách Sạn':'🏨','Thương Mại':'🏪','Nhà Phố':'🏘️','Khác':'🏗️'
+};
+
+async function loadGallery() {
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now());
+    const data = await res.json();
+    allItems = data.items || [];
+    renderGallery(allItems);
+  } catch(e) {
+    document.getElementById('gallery-loading').innerHTML =
+      '<div style="font-size:2rem">⚠️</div><br>Không tải được dữ liệu. Vui lòng thử lại sau.';
+  }
+}
+
+const FALLBACK_BG = [
+  'linear-gradient(135deg,#1a2035,#0d1520)',
+  'linear-gradient(135deg,#201a10,#150f05)',
+  'linear-gradient(135deg,#0d2020,#051510)',
+  'linear-gradient(135deg,#201018,#150810)',
+  'linear-gradient(135deg,#1a1520,#0d0a15)',
+  'linear-gradient(135deg,#1c1a10,#100e05)',
+  'linear-gradient(135deg,#0d1a20,#050f15)',
+];
+
+function renderGallery(items) {
+  const loading = document.getElementById('gallery-loading');
+  const empty   = document.getElementById('gallery-empty');
+  const grid    = document.getElementById('gallery-grid');
+
+  loading.style.display = 'none';
+
+  if(!items || items.length === 0) {
+    empty.style.display = 'block';
+    grid.style.display  = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display  = 'grid';
+
+  // Điều chỉnh grid layout theo số lượng item
+  if(items.length === 1) {
+    grid.style.gridTemplateColumns = '1fr';
+    grid.style.gridTemplateRows   = '320px';
+  } else if(items.length <= 3) {
+    grid.style.gridTemplateColumns = 'repeat(3,1fr)';
+    grid.style.gridTemplateRows   = '280px';
+  } else {
+    grid.style.gridTemplateColumns = 'repeat(4,1fr)';
+    grid.style.gridTemplateRows   = '220px 220px';
+  }
+
+  grid.innerHTML = items.map((item, i) => {
+    const emoji    = CAT_EMOJI[item.category] || '🏗️';
+    const hasImg   = item.image && item.image.trim() !== '';
+    const fallback = FALLBACK_BG[i % FALLBACK_BG.length];
+    const bgStyle  = hasImg
+      ? `background:url('${encodeURI(item.image)}') center/cover no-repeat;`
+      : `background:${fallback};`;
+    // Item đầu chiếm 2 cột 2 hàng nếu có >= 4 items
+    const spanStyle = (i === 0 && items.length >= 4)
+      ? 'grid-column:span 2;grid-row:span 2;'
+      : (i === 3 && items.length >= 5) ? 'grid-column:span 2;' : '';
+    // Năm từ timestamp ID
+    const idNum = item.id ? item.id.toString().replace('CT','') : '';
+    const year  = idNum && !isNaN(idNum) ? new Date(+idNum).getFullYear() : '';
+
+    return `
+      <div class="g-item" data-cat="${item.category}" style="${spanStyle}">
+        <div class="g-bg" style="${bgStyle}font-size:${i===0&&items.length>=4?'9rem':'5rem'}">${hasImg?'':emoji}</div>
+        <div class="g-overlay"></div>
+        <div class="g-info">
+          <div class="g-cat">${item.category}${year?' · '+year:''}</div>
+          <div class="g-title">${item.title}</div>
+          <div class="g-area">📍 ${item.location||''}${item.size?' · '+item.size:''}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterG(btn, cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = cat;
+  const filtered = cat === 'all' ? allItems : allItems.filter(i => i.category === cat);
+  renderGallery(filtered);
+}
+
+// Load khi trang mở
+loadGallery();
+
+// LOAD NỘI DUNG TỪ GOOGLE SHEET
+async function loadContent() {
+  try {
+    const res  = await fetch(API_URL + '?type=content&t=' + Date.now());
+    const data = await res.json();
+    if(data.content) {
+      data.content.forEach(({key, value}) => {
+        document.querySelectorAll(`[data-key="${key}"]`).forEach(el => {
+          el.innerHTML = value;
+        });
+      });
+    }
+  } catch(e) { /* Dùng text mặc định trong HTML nếu lỗi */ }
+}
+loadContent();
+
+// SMOOTH SCROLL
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
+  const t=document.querySelector(a.getAttribute('href'));
+  if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}
+}));
+
+// CONTACT FORM — Google Sheets Backend
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzMuam393Ao4cePF-TJdnUfFKUnFZ7F8e-uz5EK1BZ65oUtlHRgrra1rtbN32ukX6yv/exec';
+
+async function submitForm(){
+  const name    = document.getElementById('cf-name').value.trim();
+  const phone   = document.getElementById('cf-phone').value.trim();
+  const email   = document.getElementById('cf-email').value.trim();
+  const service = document.getElementById('cf-service').value;
+  const area    = document.getElementById('cf-area').value.trim();
+  const address = document.getElementById('cf-address').value.trim();
+  const note    = document.getElementById('cf-note').value.trim();
+
+  if(!name)  { alert('Vui lòng nhập họ tên!'); return; }
+  if(!phone) { alert('Vui lòng nhập số điện thoại!'); return; }
+
+  const btn = document.querySelector('.cf-submit');
+  btn.textContent = '⏳ Đang gửi...';
+  btn.disabled = true;
+
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'contact', name, phone, email, service, area, address, note })
+    });
+
+    // Thành công
+    btn.textContent = '✅ Đã gửi thành công!';
+    btn.style.background = '#22c55e';
+    document.getElementById('cf-success').classList.add('show');
+
+    // Reset sau 4 giây
+    setTimeout(() => {
+      btn.textContent = '📩 Gửi Yêu Cầu Báo Giá';
+      btn.style.background = '';
+      btn.disabled = false;
+      document.getElementById('cf-success').classList.remove('show');
+      ['cf-name','cf-phone','cf-email','cf-area','cf-address','cf-note'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+      });
+      document.getElementById('cf-service').selectedIndex = 0;
+    }, 4000);
+
+  } catch(err) {
+    btn.textContent = '❌ Gửi thất bại — thử lại!';
+    btn.style.background = '#ef4444';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.textContent = '📩 Gửi Yêu Cầu Báo Giá';
+      btn.style.background = '';
+    }, 3000);
+  }
+}
+
+// CURSOR on new elements
+document.querySelectorAll('.zalo-btn,.phone-btn,.cf-submit,.mobile-menu-btn,.mobile-close,.map-cta-btn').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px'});
+});
+</script>
+</body>
+</html>

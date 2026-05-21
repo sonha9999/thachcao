@@ -1,4 +1,6 @@
-/* src/AdminPanel.css */
+/* ==========================================================================
+   1. VARIABLES & RESET
+   ========================================================================== */
 *,
 *::before,
 *::after {
@@ -6,6 +8,7 @@
   padding: 0;
   box-sizing: border-box;
 }
+
 :root {
   --c0: #0a0b0d;
   --c1: #111318;
@@ -19,6 +22,7 @@
   --green: #22c55e;
   --red: #ef4444;
 }
+
 body {
   background: var(--c0);
   color: var(--text);
@@ -26,7 +30,9 @@ body {
   min-height: 100vh;
 }
 
-/* LOGIN */
+/* ==========================================================================
+     2. LOGIN SCREEN
+     ========================================================================== */
 #login-screen {
   position: fixed;
   inset: 0;
@@ -36,6 +42,7 @@ body {
   justify-content: center;
   z-index: 999;
 }
+
 .login-box {
   background: var(--c2);
   border: 1px solid var(--line);
@@ -45,21 +52,29 @@ body {
   max-width: 380px;
   text-align: center;
 }
+
 .login-logo {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
+
 .login-title {
   font-size: 1.4rem;
   font-weight: 800;
   color: var(--text);
   margin-bottom: 0.3rem;
 }
+
+.login-title span {
+  color: var(--accent);
+}
+
 .login-sub {
   font-size: 0.85rem;
   color: var(--muted);
   margin-bottom: 2rem;
 }
+
 .login-input {
   width: 100%;
   background: var(--c3);
@@ -73,10 +88,12 @@ body {
   text-align: center;
   letter-spacing: 0.2em;
 }
+
 .login-input:focus {
   outline: none;
   border-color: var(--accent);
 }
+
 .login-btn {
   width: 100%;
   background: var(--accent);
@@ -89,20 +106,24 @@ body {
   cursor: pointer;
   transition: background 0.25s;
 }
+
 .login-btn:hover {
   background: var(--accent2);
 }
+
 .login-error {
   color: var(--red);
   font-size: 0.83rem;
   margin-top: 0.8rem;
-  display: none;
 }
 
-/* LAYOUT */
+/* ==========================================================================
+     3. LAYOUT & TOPBAR
+     ========================================================================== */
 #main {
   display: none;
 }
+
 .topbar {
   background: var(--c1);
   border-bottom: 1px solid var(--line);
@@ -114,11 +135,13 @@ body {
   top: 0;
   z-index: 100;
 }
+
 .topbar-logo {
   display: flex;
   align-items: center;
   gap: 0.7rem;
 }
+
 .topbar-icon {
   width: 34px;
   height: 34px;
@@ -128,19 +151,23 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 .topbar-name {
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--text);
 }
+
 .topbar-name span {
   color: var(--accent);
 }
+
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
+
 .logout-btn {
   background: transparent;
   border: 1px solid var(--line);
@@ -152,26 +179,15 @@ body {
   font-family: "Be Vietnam Pro", sans-serif;
   transition: all 0.25s;
 }
+
 .logout-btn:hover {
   border-color: var(--red);
   color: var(--red);
 }
-.view-btn {
-  background: rgba(232, 160, 32, 0.1);
-  border: 1px solid var(--line);
-  color: var(--accent);
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: all 0.25s;
-}
-.view-btn:hover {
-  background: rgba(232, 160, 32, 0.2);
-}
 
-/* TABS */
+/* ==========================================================================
+     4. TABS SYSTEM
+     ========================================================================== */
 .tabs {
   display: flex;
   gap: 0;
@@ -179,6 +195,7 @@ body {
   padding: 0 2rem;
   background: var(--c1);
 }
+
 .tab {
   padding: 1rem 1.5rem;
   font-size: 0.85rem;
@@ -191,9 +208,11 @@ body {
   align-items: center;
   gap: 0.4rem;
 }
+
 .tab:hover {
   color: var(--text);
 }
+
 .tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
@@ -204,20 +223,25 @@ body {
   max-width: 1200px;
   margin: 0 auto;
 }
+
 .tab-panel {
   display: none;
 }
+
 .tab-panel.active {
   display: block;
 }
 
-/* STATS */
+/* ==========================================================================
+     5. PANEL & STATS CARDS
+     ========================================================================== */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
+
 .stat-card {
   background: var(--c2);
   border: 1px solid var(--line);
@@ -227,6 +251,7 @@ body {
   align-items: center;
   gap: 1rem;
 }
+
 .stat-ico {
   width: 44px;
   height: 44px;
@@ -238,19 +263,20 @@ body {
   font-size: 1.3rem;
   flex-shrink: 0;
 }
+
 .stat-num {
   font-size: 1.8rem;
   font-weight: 800;
   color: var(--accent);
   line-height: 1;
 }
+
 .stat-lbl {
   font-size: 0.75rem;
   color: var(--muted);
   margin-top: 0.2rem;
 }
 
-/* PANEL */
 .panel {
   background: var(--c1);
   border: 1px solid var(--line);
@@ -258,6 +284,7 @@ body {
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
+
 .panel-head {
   padding: 1.2rem 1.8rem;
   border-bottom: 1px solid var(--line);
@@ -267,6 +294,7 @@ body {
   flex-wrap: wrap;
   gap: 0.8rem;
 }
+
 .panel-title {
   font-size: 1rem;
   font-weight: 700;
@@ -275,6 +303,7 @@ body {
   align-items: center;
   gap: 0.6rem;
 }
+
 .panel-title::before {
   content: "";
   width: 3px;
@@ -282,14 +311,10 @@ body {
   background: var(--accent);
   border-radius: 2px;
 }
-.panel-desc {
-  font-size: 0.8rem;
-  color: var(--muted);
-  padding: 0.5rem 1.8rem 1rem;
-  border-bottom: 1px solid var(--line);
-}
 
-/* BUTTONS */
+/* ==========================================================================
+     6. ACTIONS & DATA TABLES
+     ========================================================================== */
 .btn-add {
   background: var(--accent);
   color: var(--c0);
@@ -305,9 +330,11 @@ body {
   align-items: center;
   gap: 0.4rem;
 }
+
 .btn-add:hover {
   background: var(--accent2);
 }
+
 .btn-save-all {
   background: var(--accent);
   color: var(--c0);
@@ -323,9 +350,11 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
+
 .btn-save-all:hover {
   background: var(--accent2);
 }
+
 .btn-refresh {
   background: var(--c3);
   border: 1px solid var(--line);
@@ -341,18 +370,20 @@ body {
   align-items: center;
   gap: 0.4rem;
 }
+
 .btn-refresh:hover {
   color: var(--text);
 }
 
-/* TABLE */
 .table-wrap {
   overflow-x: auto;
 }
+
 table {
   width: 100%;
   border-collapse: collapse;
 }
+
 th {
   padding: 0.9rem 1.2rem;
   text-align: left;
@@ -364,6 +395,7 @@ th {
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
+
 td {
   padding: 0.9rem 1.2rem;
   border-bottom: 1px solid rgba(232, 160, 32, 0.06);
@@ -371,12 +403,15 @@ td {
   color: var(--muted);
   vertical-align: middle;
 }
+
 tr:last-child td {
   border: none;
 }
+
 tr:hover td {
   background: rgba(255, 255, 255, 0.02);
 }
+
 .td-img {
   width: 60px;
   height: 50px;
@@ -384,46 +419,28 @@ tr:hover td {
   border-radius: 6px;
   border: 1px solid var(--line);
 }
-.td-img-ph {
-  width: 60px;
-  height: 50px;
-  background: var(--c3);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  border: 1px solid var(--line);
-}
-.td-img-ph-drive {
-  width: 60px;
-  height: 50px;
-  background: rgba(232, 160, 32, 0.1);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  border: 1px solid var(--line);
-}
+
 .td-title {
   color: var(--text);
   font-weight: 600;
 }
+
 .cat-badge {
   display: inline-block;
   background: rgba(232, 160, 32, 0.1);
-  border: 1px solid rgba(232, 160, 32, 0.2);
+  border: 1px solid rgba(232, 160, 32, 0.25);
   color: var(--accent);
   padding: 0.2rem 0.7rem;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;
 }
+
 .action-row {
   display: flex;
   gap: 0.5rem;
 }
+
 .btn-edit {
   background: rgba(232, 160, 32, 0.1);
   border: 1px solid rgba(232, 160, 32, 0.2);
@@ -434,11 +451,12 @@ tr:hover td {
   font-size: 0.78rem;
   font-weight: 600;
   transition: all 0.25s;
-  font-family: "Be Vietnam Pro", sans-serif;
 }
+
 .btn-edit:hover {
   background: rgba(232, 160, 32, 0.25);
 }
+
 .btn-del {
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -449,34 +467,34 @@ tr:hover td {
   font-size: 0.78rem;
   font-weight: 600;
   transition: all 0.25s;
-  font-family: "Be Vietnam Pro", sans-serif;
 }
+
 .btn-del:hover {
   background: rgba(239, 68, 68, 0.2);
 }
-.table-empty {
-  padding: 3rem;
-  text-align: center;
-  color: var(--muted);
-}
+
 .table-loading {
   padding: 2rem;
   text-align: center;
   color: var(--muted);
 }
 
-/* CONTENT EDITOR */
+/* ==========================================================================
+     7. CONTENT EDITOR LAYOUTS
+     ========================================================================== */
 .content-sections {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
+
 .section-block {
   background: var(--c2);
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
 }
+
 .section-header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--line);
@@ -487,42 +505,50 @@ tr:hover td {
   user-select: none;
   transition: background 0.25s;
 }
+
 .section-header:hover {
   background: rgba(255, 255, 255, 0.03);
 }
+
 .section-header-ico {
   font-size: 1.2rem;
 }
+
 .section-header-title {
   font-weight: 700;
   color: var(--text);
   font-size: 0.95rem;
   flex: 1;
 }
+
 .section-header-arrow {
   color: var(--muted);
   font-size: 0.9rem;
   transition: transform 0.3s;
 }
+
 .section-header.open .section-header-arrow {
   transform: rotate(180deg);
 }
+
 .section-fields {
-  display: none;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
+
 .section-fields.collapsed {
   display: none;
 }
+
 .field-row {
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: 1rem;
   align-items: start;
 }
+
 .field-label {
   font-size: 0.78rem;
   font-weight: 700;
@@ -531,6 +557,7 @@ tr:hover td {
   text-transform: uppercase;
   padding-top: 0.7rem;
 }
+
 .field-tag {
   font-size: 0.68rem;
   color: rgba(232, 160, 32, 0.6);
@@ -538,6 +565,7 @@ tr:hover td {
   margin-top: 0.2rem;
   font-family: monospace;
 }
+
 .f-input,
 .f-textarea {
   width: 100%;
@@ -550,21 +578,25 @@ tr:hover td {
   font-size: 0.88rem;
   transition: border-color 0.25s;
 }
+
 .f-input:focus,
 .f-textarea:focus {
   outline: none;
   border-color: var(--accent);
 }
+
 .f-textarea {
   resize: vertical;
   min-height: 80px;
   line-height: 1.6;
 }
+
 .field-changed .f-input,
 .field-changed .f-textarea {
   border-color: rgba(232, 160, 32, 0.5);
   background: rgba(232, 160, 32, 0.04);
 }
+
 .save-row {
   display: flex;
   align-items: center;
@@ -576,13 +608,16 @@ tr:hover td {
   bottom: 0;
   z-index: 50;
 }
+
 .unsaved-count {
   font-size: 0.83rem;
   color: var(--accent);
   font-weight: 600;
 }
 
-/* MODAL */
+/* ==========================================================================
+     8. MODAL WINDOWS
+     ========================================================================== */
 .modal-bg {
   position: fixed;
   inset: 0;
@@ -593,9 +628,11 @@ tr:hover td {
   justify-content: center;
   backdrop-filter: blur(4px);
 }
+
 .modal-bg.open {
   display: flex;
 }
+
 .modal {
   background: var(--c2);
   border: 1px solid var(--line);
@@ -607,6 +644,7 @@ tr:hover td {
   overflow-y: auto;
   position: relative;
 }
+
 .modal-title {
   font-size: 1.1rem;
   font-weight: 800;
@@ -616,6 +654,7 @@ tr:hover td {
   align-items: center;
   gap: 0.6rem;
 }
+
 .modal-title::before {
   content: "";
   width: 3px;
@@ -623,6 +662,7 @@ tr:hover td {
   background: var(--accent);
   border-radius: 2px;
 }
+
 .modal-close {
   position: absolute;
   top: 1.2rem;
@@ -633,25 +673,28 @@ tr:hover td {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  cursor: pointer;
   font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .modal-close:hover {
   border-color: var(--red);
   color: var(--red);
 }
+
 .mf-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1rem;
 }
+
 .mf-field {
   margin-bottom: 1rem;
 }
+
 .mf-label {
   display: block;
   font-size: 0.75rem;
@@ -661,6 +704,7 @@ tr:hover td {
   text-transform: uppercase;
   margin-bottom: 0.5rem;
 }
+
 .mf-input,
 .mf-select,
 .mf-textarea {
@@ -675,80 +719,36 @@ tr:hover td {
   transition: border-color 0.25s;
   appearance: none;
 }
+
 .mf-input:focus,
 .mf-select:focus,
 .mf-textarea:focus {
   outline: none;
   border-color: var(--accent);
 }
+
 .mf-select option {
   background: var(--c3);
 }
+
 .mf-textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 80px;
   line-height: 1.6;
 }
-.img-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.8rem;
-}
-.img-tab {
-  flex: 1;
-  background: var(--c3);
-  border: 1px solid var(--line);
-  color: var(--muted);
-  padding: 0.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-align: center;
-  transition: all 0.25s;
-  font-family: "Be Vietnam Pro", sans-serif;
-}
-.img-tab.active {
-  background: rgba(232, 160, 32, 0.15);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.img-preview {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 6px;
-  margin-bottom: 0.8rem;
-  display: none;
-}
-.img-preview.show {
-  display: block;
-}
-.img-url-input {
-  width: 100%;
-  background: var(--c3);
-  border: 1px solid var(--line);
-  color: var(--text);
-  padding: 0.7rem 1rem;
-  border-radius: 6px;
-  font-family: "Be Vietnam Pro", sans-serif;
-  font-size: 0.83rem;
-  transition: border-color 0.25s;
-}
-.img-url-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+
 .img-hint {
   font-size: 0.75rem;
   color: var(--muted);
   margin-top: 0.4rem;
 }
+
 .modal-footer {
   display: flex;
   gap: 0.8rem;
   margin-top: 1.5rem;
 }
+
 .btn-modal-save {
   flex: 1;
   background: var(--accent);
@@ -759,12 +759,13 @@ tr:hover td {
   font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 800;
   font-size: 0.92rem;
-  cursor: pointer;
   transition: background 0.25s;
 }
+
 .btn-modal-save:hover {
   background: var(--accent2);
 }
+
 .btn-cancel {
   background: var(--c3);
   color: var(--muted);
@@ -773,53 +774,16 @@ tr:hover td {
   border-radius: 8px;
   font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
-  cursor: pointer;
   transition: all 0.25s;
 }
+
 .btn-cancel:hover {
   color: var(--text);
 }
 
-/* TOAST */
-#toast {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: var(--c2);
-  border: 1px solid var(--line);
-  color: var(--text);
-  padding: 0.8rem 2rem;
-  border-radius: 999px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  z-index: 9999;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
-  white-space: nowrap;
-}
-#toast.show {
-  transform: translateX(-50%) translateY(0);
-}
-#toast.success {
-  border-color: rgba(34, 197, 94, 0.5);
-  color: var(--green);
-}
-#toast.error {
-  border-color: rgba(239, 68, 68, 0.5);
-  color: var(--red);
-}
-#toast.info {
-  border-color: rgba(232, 160, 32, 0.5);
-  color: var(--accent);
-}
-
-/* CONFIRM */
-#confirm-modal .modal {
-  max-width: 360px;
-  text-align: center;
-}
-
+/* ==========================================================================
+     9. MEDIA QUERIES
+     ========================================================================== */
 @media (max-width: 768px) {
   .stats-row {
     grid-template-columns: 1fr 1fr;

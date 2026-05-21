@@ -1,5 +1,4 @@
-// src/components/LandingPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../LandingPage.css";
 
 const API_URL =
@@ -20,25 +19,47 @@ const FALLBACK_BG = [
   "linear-gradient(135deg,#1a2035,#0d1520)",
   "linear-gradient(135deg,#201a10,#150f05)",
   "linear-gradient(135deg,#0d2020,#051510)",
-  "linear-gradient(135deg,#201018,#150810)",
-  "linear-gradient(135deg,#1a1520,#0d0a15)",
-  "linear-gradient(135deg,#1c1a10,#100e05)",
-  "linear-gradient(135deg,#0d1a20,#050f15)",
 ];
 
-export default function LandingPage({ onNavigateToAdmin }) {
-  const [allItems, setAllItems] = useState([]);
+// Hàm bổ trợ chuyển đổi linh hoạt ảnh Drive bị chặn sang Thumbnail
+const formatDriveUrl = (url) => {
+  if (!url) return "";
+  if (
+    url.includes("drive.google.com/uc") ||
+    url.includes("drive.google.com/file")
+  ) {
+    const match = url.match(/[?&]id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
+    }
+  }
+  return url;
+};
+
+export default function LandingPage() {
+  const [galleryItems, setGalleryItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [currentCat, setCurrentCat] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
   const [content, setContent] = useState({});
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [loadingGallery, setLoadingGallery] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Album Lightbox State
-  const [activeProject, setActiveProject] = useState(null);
-  const [activeImgIndex, setActiveImgIndex] = useState(0);
+  // State phục vụ Lightbox Slideshow xem nhiều ảnh công trình
+  const [activeGalleryProject, setActiveGalleryProject] = useState(null);
+  const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
 
-  // Form states
-  const [formData, setFormData] = useState({
+  // Bộ tính toán báo giá thạch cao
+  const [calcParams, setCalcParams] = useState({
+    svc: 95000,
+    area: 50,
+    mat: 1.0,
+    build: 1.0,
+  });
+  const [calcResult, setCalcResult] = useState("4.750.000đ");
+
+  // Form liên hệ
+  const [contactForm, setContactForm] = useState({
     name: "",
     phone: "",
     email: "",
@@ -47,18 +68,16 @@ export default function LandingPage({ onNavigateToAdmin }) {
     address: "",
     note: "",
   });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState(false);
 
-  // Calculator states
-  const [calcParams, setCalcParams] = useState({
-    svc: 95000,
-    area: 50,
-    mat: 1.0,
-    build: 1.0,
-  });
-  const [calcActive, setCalcActive] = useState(false);
+  // Quản lý kéo trượt chuột cho Gallery
+  const gridRef = useRef(null);
+  const [isGrabbing, setIsGrabbing] = useState(false);
+  const dragStatus = useRef({ isDown: false, startX: 0, scrollLeft: 0 });
 
-  // Hiệu ứng chuột Custom Cursor
   useEffect(() => {
+    // Custom Cursor di chuyển trên màn hình máy tính (Ẩn hoàn toàn trên di động)
     const cur = document.getElementById("cursor");
     const ring = document.getElementById("cursor-ring");
     let mx = 0,
@@ -66,7 +85,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
       rx = 0,
       ry = 0;
 
-    const handleMouseMove = (e) => {
+    const onMouseMove = (e) => {
       mx = e.clientX;
       my = e.clientY;
       if (cur) {
@@ -74,236 +93,173 @@ export default function LandingPage({ onNavigateToAdmin }) {
         cur.style.top = my + "px";
       }
     };
-    document.addEventListener("mousemove", handleMouseMove);
 
-    let frameId;
-    const anim = () => {
+    document.addEventListener("mousemove", onMouseMove);
+
+    const animLoop = () => {
       rx += (mx - rx) * 0.12;
       ry += (my - ry) * 0.12;
       if (ring) {
         ring.style.left = rx + "px";
         ring.style.top = ry + "px";
       }
-      frameId = requestAnimationFrame(anim);
+      requestAnimationFrame(animLoop);
     };
-    anim();
+    const animId = requestAnimationFrame(animLoop);
 
-    const handleMouseEnter = () => {
-      if (cur && ring) {
-        cur.style.width = "16px";
-        cur.style.height = "16px";
-        ring.style.width = "50px";
-        ring.style.height = "50px";
-      }
-    };
-    const handleMouseLeave = () => {
-      if (cur && ring) {
-        cur.style.width = "10px";
-        cur.style.height = "10px";
-        ring.style.width = "36px";
-        ring.style.height = "36px";
-      }
-    };
+    // Tải dữ liệu song song từ API
+    Promise.all([
+      fetch(API_URL + "?t=" + Date.now()).then((r) => r.json()),
+      fetch(API_URL + "?type=content&t=" + Date.now()).then((r) => r.json()),
+      fetch(API_URL + "?type=reviews&t=" + Date.now()).then((r) => r.json()),
+    ])
+      .then(([galleryData, contentData, reviewsData]) => {
+        setGalleryItems(galleryData.items || []);
+        setFilteredItems(galleryData.items || []);
+        setLoadingGallery(false);
 
-    const interactives = document.querySelectorAll(
-      "a, button, select, input, textarea, .filter-btn, .g-item, .lightbox-arrow, .lightbox-thumb, .lightbox-close"
-    );
-    interactives.forEach((el) => {
-      el.addEventListener("mouseenter", handleMouseEnter);
-      el.addEventListener("mouseleave", handleMouseLeave);
-    });
+        if (contentData.content) {
+          const obj = {};
+          contentData.content.forEach((item) => (obj[item.key] = item.value));
+          setContent(obj);
+        }
+
+        // Đánh giá động, nếu trống thì dùng dữ liệu mẫu từ bản gốc
+        if (reviewsData.reviews && reviewsData.reviews.length > 0) {
+          setReviews(reviewsData.reviews);
+        } else {
+          setReviews([
+            {
+              id: "1",
+              name: "Anh Nguyễn Văn Tuấn",
+              role: "Chủ hộ Vinhomes Grand Park",
+              project: "🏠 Căn hộ 450m² · Trần giật cấp",
+              stars: 5,
+              text: "ThạchPro hoàn thành toàn bộ trần giật cấp và vách ngăn penthouse 450m² chỉ trong 10 ngày. Bề mặt cực kỳ mịn, đường nét sắc sảo, đội thợ sạch sẽ và chuyên nghiệp. Rất hài lòng và sẽ giới thiệu cho bạn bè!",
+            },
+            {
+              id: "2",
+              name: "Chị Trần Hồng Nhung",
+              role: "Giám đốc Công ty TechViet",
+              project: "🏢 Văn phòng 1.200m² · Quận 1",
+              stars: 5,
+              text: "Đội thợ rất chuyên nghiệp, đúng giờ và sạch sẽ. Báo giá minh bạch, không phát sinh. Văn phòng 1.200m² được hoàn thiện đúng theo bản vẽ thiết kế, chất lượng vượt kỳ vọng của ban lãnh đạo.",
+            },
+            {
+              id: "3",
+              name: "Anh Lê Minh Khoa",
+              role: "Nhà thầu xây dựng, Bình Dương",
+              project: "🏗️ Dự án 300 căn hộ · Vật liệu sỉ",
+              stars: 5,
+              text: "Mua vật liệu số lượng lớn cho dự án 300 căn hộ. Hàng đúng chủng loại, giao đúng hẹn, giá tốt hơn các đại lý khác. Dịch vụ hậu mãi cũng rất tốt. Sẽ tiếp tục hợp tác dài hạn.",
+            },
+          ]);
+        }
+      })
+      .catch(() => setLoadingGallery(false));
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(frameId);
-      interactives.forEach((el) => {
-        el.removeEventListener("mouseenter", handleMouseEnter);
-        el.removeEventListener("mouseleave", handleMouseLeave);
-      });
+      document.removeEventListener("mousemove", onMouseMove);
+      cancelAnimationFrame(animId);
     };
-  }, [loading, activeProject]);
-
-  // Hiệu ứng Nav Scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      const nav = document.getElementById("nav");
-      if (nav) nav.classList.toggle("scrolled", window.scrollY > 60);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Hiệu ứng Scroll Reveal (.rv)
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e, i) => {
-          if (e.isIntersecting) {
-            setTimeout(() => e.target.classList.add("in"), i * 50);
-            obs.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-    document
-      .querySelectorAll(".rv, .rv-l, .rv-r")
-      .forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, [loading]);
-
-  // Hiệu ứng chạy Counter Số
-  useEffect(() => {
-    const animC = (el) => {
-      const t = +el.dataset.count;
-      const suf = el.textContent.slice(-1);
-      let n = 0,
-        step = t / 60;
-      const iv = setInterval(() => {
-        n += step;
-        if (n >= t) {
-          n = t;
-          clearInterval(iv);
-        }
-        el.textContent = Math.floor(n) + (isNaN(suf) ? suf : "");
-      }, 20);
-    };
-    const cObs = new IntersectionObserver(
-      (e) =>
-        e.forEach((e) => {
-          if (e.isIntersecting) {
-            animC(e.target);
-            cObs.unobserve(e.target);
-          }
-        }),
-      { threshold: 0.5 }
-    );
-    document.querySelectorAll("[data-count]").forEach((el) => cObs.observe(el));
-    return () => cObs.disconnect();
-  }, [loading]);
-
-  // Load Gallery và Content
-  useEffect(() => {
-    const loadAll = async () => {
-      try {
-        const [galRes, cntRes] = await Promise.all([
-          fetch(`${API_URL}?t=${Date.now()}`).then((r) => r.json()),
-          fetch(`${API_URL}?type=content&t=${Date.now()}`).then((r) =>
-            r.json()
-          ),
-        ]);
-        setAllItems(galRes.items || []);
-        setFilteredItems(galRes.items || []);
-        setLoading(false);
-
-        if (cntRes.content) {
-          const mapped = {};
-          cntRes.content.forEach(({ key, value }) => {
-            mapped[key] = value;
-          });
-          setContent(mapped);
-        }
-      } catch (e) {
-        setLoading(false);
-      }
-    };
-    loadAll();
-  }, []);
-
-  const filterG = (cat) => {
-    setCurrentCat(cat);
+  // Bộ lọc Gallery
+  const handleFilter = (cat) => {
+    setActiveCategory(cat);
     if (cat === "all") {
-      setFilteredItems(allItems);
+      setFilteredItems(galleryItems);
     } else {
-      setFilteredItems(allItems.filter((i) => i.category === cat));
+      setFilteredItems(galleryItems.filter((i) => i.category === cat));
     }
   };
 
-  const handleFormSubmit = async (e) => {
+  // Tính toán báo giá thạch cao
+  const handleCalc = (key, val) => {
+    const updated = { ...calcParams, [key]: Number(val) };
+    setCalcParams(updated);
+    if (updated.svc === 0) {
+      setCalcResult("Liên hệ báo giá");
+    } else {
+      const total = Math.round(
+        updated.svc * updated.area * updated.mat * updated.build
+      );
+      setCalcResult(total.toLocaleString("vi-VN") + "đ");
+    }
+  };
+
+  // Gửi Form liên hệ khảo sát
+  const submitContact = async (e) => {
     e.preventDefault();
-    if (!formData.name) {
-      alert("Vui lòng nhập họ tên!");
+    if (!contactForm.name || !contactForm.phone) {
+      alert("Vui lòng nhập Họ tên và Số điện thoại!");
       return;
     }
-    if (!formData.phone) {
-      alert("Vui lòng nhập số điện thoại!");
-      return;
-    }
-
-    const btn = document.querySelector(".cf-submit");
-    btn.textContent = "⏳ Đang gửi...";
-    btn.disabled = true;
-
+    setContactLoading(true);
     try {
       await fetch(API_URL, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "contact", ...formData }),
+        body: JSON.stringify({ type: "contact", ...contactForm }),
       });
-      btn.textContent = "✅ Đã gửi thành công!";
-      btn.style.background = "#22c55e";
-      document.getElementById("cf-success").classList.add("show");
-      setTimeout(() => {
-        btn.textContent = "📩 Gửi Yêu Cầu Báo Giá";
-        btn.style.background = "";
-        btn.disabled = false;
-        document.getElementById("cf-success").classList.remove("show");
-        setFormData({
-          name: "",
-          phone: "",
-          email: "",
-          service: "",
-          area: "",
-          address: "",
-          note: "",
-        });
-      }, 4000);
-    } catch (err) {
-      btn.textContent = "❌ Gửi thất bại — thử lại!";
-      btn.style.background = "#ef4444";
-      btn.disabled = false;
+      setContactSuccess(true);
+      setContactForm({
+        name: "",
+        phone: "",
+        email: "",
+        service: "",
+        area: "",
+        address: "",
+        note: "",
+      });
+      setTimeout(() => setContactSuccess(false), 5000);
+    } catch {
+      alert("Có lỗi xảy ra, vui lòng thử lại.");
+    } finally {
+      setContactLoading(false);
     }
   };
 
-  // Tính toán báo giá
-  const calcTotal = Math.round(
-    calcParams.svc * calcParams.area * calcParams.mat * calcParams.build
-  );
-
-  // Xử lý click mở popup album ảnh
-  const handleOpenLightbox = (item) => {
-    const parsedImages = item.image
-      ? item.image.split(/[\s,\n\t]+/).filter((url) => url.trim() !== "")
-      : [];
-    setActiveProject({ ...item, imageList: parsedImages });
-    setActiveImgIndex(0);
+  // Sự kiện kéo trượt chuột ngang mượt mà cho công trình
+  const onMouseDown = (e) => {
+    if (filteredItems.length <= 6) return;
+    dragStatus.current.isDown = true;
+    setIsGrabbing(true);
+    dragStatus.current.startX = e.pageX - gridRef.current.offsetLeft;
+    dragStatus.current.scrollLeft = gridRef.current.scrollLeft;
   };
 
-  const handlePrevImg = (e) => {
-    e.stopPropagation();
-    if (!activeProject || activeProject.imageList.length <= 1) return;
-    setActiveImgIndex((prev) =>
-      prev === 0 ? activeProject.imageList.length - 1 : prev - 1
-    );
+  const onMouseLeave = () => {
+    dragStatus.current.isDown = false;
+    setIsGrabbing(false);
   };
 
-  const handleNextImg = (e) => {
-    e.stopPropagation();
-    if (!activeProject || activeProject.imageList.length <= 1) return;
-    setActiveImgIndex((prev) =>
-      prev === activeProject.imageList.length - 1 ? 0 : prev + 1
-    );
+  const onMouseUp = () => {
+    dragStatus.current.isDown = false;
+    setIsGrabbing(false);
+  };
+
+  const onMouseMove = (e) => {
+    if (!dragStatus.current.isDown) return;
+    e.preventDefault();
+    const x = e.pageX - gridRef.current.offsetLeft;
+    const walk = (x - dragStatus.current.startX) * 1.5;
+    gridRef.current.scrollLeft = dragStatus.current.scrollLeft - walk;
   };
 
   return (
-    <div>
+    <>
       <div id="cursor"></div>
       <div id="cursor-ring"></div>
 
-      {/* NAV */}
+      {/* HEADER NAV */}
       <nav id="nav">
-        <a href="#" className="logo-wrap">
+        <a
+          href="#"
+          className="logo-wrap"
+          onDoubleClick={() => (window.location.href = "/admin")}
+        >
           <div className="logo-icon">🏠</div>
           <span className="logo-text">
             Thạch<span>Pro</span>
@@ -336,21 +292,12 @@ export default function LandingPage({ onNavigateToAdmin }) {
           >
             📞 {content.contact_phone || "0901 234 567"}
           </a>
-          <button
-            onClick={onNavigateToAdmin}
-            className="btn-nav"
-            style={{ marginRight: "10px" }}
-          >
-            Admin
-          </button>
-          <a href="#cta" className="btn-nav">
+          <a href="#contact" className="btn-nav">
             Liên Hệ Ngay
           </a>
           <button
             className="mobile-menu-btn"
-            onClick={() =>
-              document.getElementById("mobile-menu").classList.add("open")
-            }
+            onClick={() => setMobileMenuOpen(true)}
           >
             ☰
           </button>
@@ -358,53 +305,26 @@ export default function LandingPage({ onNavigateToAdmin }) {
       </nav>
 
       {/* MOBILE MENU */}
-      <div id="mobile-menu">
+      <div id="mobile-menu" className={mobileMenuOpen ? "open" : ""}>
         <button
           className="mobile-close"
-          onClick={() =>
-            document.getElementById("mobile-menu").classList.remove("open")
-          }
+          onClick={() => setMobileMenuOpen(false)}
         >
           ✕
         </button>
-        <a
-          href="#services"
-          onClick={() =>
-            document.getElementById("mobile-menu").classList.remove("open")
-          }
-        >
+        <a href="#services" onClick={() => setMobileMenuOpen(false)}>
           Dịch Vụ
         </a>
-        <a
-          href="#gallery"
-          onClick={() =>
-            document.getElementById("mobile-menu").classList.remove("open")
-          }
-        >
+        <a href="#gallery" onClick={() => setMobileMenuOpen(false)}>
           Công Trình
         </a>
-        <a
-          href="#calc"
-          onClick={() =>
-            document.getElementById("mobile-menu").classList.remove("open")
-          }
-        >
+        <a href="#calc" onClick={() => setMobileMenuOpen(false)}>
           Báo Giá
         </a>
-        <a
-          href="#materials"
-          onClick={() =>
-            document.getElementById("mobile-menu").classList.remove("open")
-          }
-        >
+        <a href="#materials" onClick={() => setMobileMenuOpen(false)}>
           Vật Liệu
         </a>
-        <a
-          href="#contact"
-          onClick={() =>
-            document.getElementById("mobile-menu").classList.remove("open")
-          }
-        >
+        <a href="#contact" onClick={() => setMobileMenuOpen(false)}>
           Liên Hệ
         </a>
       </div>
@@ -414,19 +334,12 @@ export default function LandingPage({ onNavigateToAdmin }) {
         <div className="hero-grid"></div>
         <div className="hero-orb"></div>
         <div className="hero-orb2"></div>
-        <div className="hero-bignum" data-key="hero_bignum">
-          {content.hero_bignum || "15"}
-        </div>
+        <div className="hero-bignum">{content.about_years || "15"}</div>
         <div className="hero-content">
           <div className="hero-left">
             <div className="hero-tag">
               <span className="dot"></span>{" "}
-              <span
-                dangerouslySetInnerHTML={{
-                  __html:
-                    content.hero_tag || "Đang nhận dự án — TP.HCM & Bình Dương",
-                }}
-              ></span>
+              {content.hero_tag || "Đang nhận dự án — TP.HCM & Bình Dương"}
             </div>
             <h1
               className="hero-title"
@@ -436,52 +349,34 @@ export default function LandingPage({ onNavigateToAdmin }) {
                   "Kiến Tạo<br>Không Gian<br><em>Hoàn Hảo</em>",
               }}
             ></h1>
-            <p
-              className="hero-sub"
-              dangerouslySetInnerHTML={{
-                __html:
-                  content.hero_sub ||
-                  "Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình.",
-              }}
-            ></p>
+            <p className="hero-sub">
+              {content.hero_sub ||
+                "Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình."}
+            </p>
             <div className="hero-btns">
-              <a
-                href="#calc"
-                className="btn-primary"
-                dangerouslySetInnerHTML={{
-                  __html: content.hero_btn1 || "→ Nhận Báo Giá Miễn Phí",
-                }}
-              ></a>
-              <a
-                href="#gallery"
-                className="btn-ghost"
-                dangerouslySetInnerHTML={{
-                  __html: content.hero_btn2 || "Xem Công Trình →",
-                }}
-              ></a>
+              <a href="#calc" className="btn-primary">
+                {content.hero_btn1 || "→ Nhận Báo Giá Miễn Phí"}
+              </a>
+              <a href="#gallery" className="btn-ghost">
+                {content.hero_btn2 || "Xem Công Trình →"}
+              </a>
             </div>
           </div>
           <div className="hero-right">
             <div className="stat-box">
-              <div className="stat-num" data-count={content.stat1_num || "500"}>
-                0+
-              </div>
+              <div className="stat-num">500+</div>
               <div className="stat-lbl">
                 {content.stat1_lbl || "Công trình hoàn thành"}
               </div>
             </div>
             <div className="stat-box">
-              <div className="stat-num" data-count={content.stat2_num || "15"}>
-                0+
-              </div>
+              <div className="stat-num">{content.about_years || "15"}+</div>
               <div className="stat-lbl">
                 {content.stat2_lbl || "Năm kinh nghiệm"}
               </div>
             </div>
             <div className="stat-box">
-              <div className="stat-num" data-count={content.stat3_num || "98"}>
-                0%
-              </div>
+              <div className="stat-num">98%</div>
               <div className="stat-lbl">
                 {content.stat3_lbl || "Khách hàng hài lòng"}
               </div>
@@ -494,7 +389,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
         </div>
       </section>
 
-      {/* TICKER */}
+      {/* TICKER INFINITE CHẠY CHỮ */}
       <div className="ticker">
         <div className="ticker-inner">
           <div className="ticker-track">
@@ -510,9 +405,9 @@ export default function LandingPage({ onNavigateToAdmin }) {
                 "Bảo Hành 24 Tháng",
               ])
               .flat()
-              .map((item, idx) => (
+              .map((text, idx) => (
                 <div key={idx} className="ticker-item">
-                  {item} <span className="ticker-sep">✦</span>
+                  {text} <span className="ticker-sep">✦</span>
                 </div>
               ))}
           </div>
@@ -523,139 +418,86 @@ export default function LandingPage({ onNavigateToAdmin }) {
       <section id="services">
         <div className="services-head">
           <div>
-            <div className="sec-eyebrow rv">Dịch Vụ</div>
-            <h2
-              className="sec-title rv d1"
-              dangerouslySetInnerHTML={{
-                __html:
-                  content.services_title ||
-                  'Thi Công Toàn Diện<br><em style="font-style:italic;color:var(--accent)">Đúng Chất Lượng</em>',
-              }}
-            ></h2>
+            <div className="sec-eyebrow">Dịch Vụ</div>
+            <h2 className="sec-title">
+              Thi Công Toàn Diện
+              <br />
+              <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
+                Đúng Chất Lượng
+              </em>
+            </h2>
           </div>
-          <p className="sec-desc rv d2">
-            {content.services_desc ||
-              "Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn."}
+          <p className="sec-desc">
+            Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng
+            bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn.
           </p>
         </div>
-        <div className="svc-grid rv">
-          {/* Card 1 */}
-          <div className="svc-card">
-            <div className="svc-top">
-              <div className="svc-ico">🏛️</div>
-              <div className="svc-n">01</div>
+        <div className="svc-grid">
+          {[
+            {
+              n: "01",
+              ico: "🏛️",
+              name: "Trần Thạch Cao Phẳng",
+              desc: "Thi công trần phẳng khung nổi & khung chìm. Bề mặt phẳng mịn tuyệt đối, che đường điện, điều hoà gọn gàng. Phù hợp căn hộ, văn phòng, nhà dân.",
+              price: "Từ 95.000đ/m²",
+            },
+            {
+              n: "02",
+              ico: "✨",
+              name: "Trần Giật Cấp Nghệ Thuật",
+              desc: "Thiết kế và thi công trần giật cấp 2–4 tầng, tích hợp hệ đèn LED âm trần, cắt chỉ nổi. Tạo chiều sâu không gian và điểm nhấn sang trọng.",
+              price: "Từ 145.000đ/m²",
+            },
+            {
+              n: "03",
+              ico: "🪟",
+              name: "Vách Ngăn Thạch Cao",
+              desc: "Vách ngăn khung thép mạ kẽm, tấm thạch cao tiêu chuẩn hoặc chống ẩm. Cách âm, cách nhiệt vượt trội. Linh hoạt bố cục không gian sống.",
+              price: "Từ 180.000đ/m²",
+            },
+            {
+              n: "04",
+              ico: "🎨",
+              name: "Phào Chỉ & Trang Trí",
+              desc: "Thi công phào chỉ thạch cao ốp tường, trần. Hoa văn cổ điển đến hiện đại, phào góc bo, gờ nổi. Hoàn thiện chi tiết tinh xảo.",
+              price: "Từ 120.000đ/md",
+            },
+            {
+              n: "05",
+              ico: "🖌️",
+              name: "Bả Bột & Sơn Nước",
+              desc: "Bả Matit 2–3 lớp, xử lý bề mặt trơn mịn hoàn hảo. Thi công sơn nước Dulux, Jotun, Kova nội ngoại thất. Màu sắc theo yêu cầu.",
+              price: "Từ 55.000đ/m²",
+            },
+            {
+              n: "06",
+              ico: "🏗️",
+              name: "Cung Cấp Vật Liệu",
+              desc: "Phân phối tấm thạch cao Knauf, USG, Vĩnh Tường; khung thép mạ kẽm; bông khoáng; phụ kiện. Giao tận công trình toàn TP.HCM, Bình Dương.",
+              price: "Giá sỉ tốt nhất",
+            },
+          ].map((svc) => (
+            <div key={svc.n} className="svc-card">
+              <div className="svc-top">
+                <div className="svc-ico">{svc.ico}</div>
+                <div className="svc-n">{svc.n}</div>
+              </div>
+              <div className="svc-name">{svc.name}</div>
+              <div className="svc-desc">{svc.desc}</div>
+              <div className="svc-price">
+                {svc.price} <span className="svc-arrow">→</span>
+              </div>
             </div>
-            <div className="svc-name">
-              {content.svc1_title || "Trần Thạch Cao Phẳng"}
-            </div>
-            <div className="svc-desc">
-              {content.svc1_desc ||
-                "Thi công trần phẳng khung nổi & khung chìm. Bề mặt phẳng mịn tuyệt đối, che đường điện, điều hoà gọn gàng. Phù hợp căn hộ, văn phòng, nhà dân."}
-            </div>
-            <div className="svc-price">
-              {content.svc1_price || "Từ 95.000đ/m²"}{" "}
-              <span className="svc-arrow">→</span>
-            </div>
-          </div>
-          {/* Card 2 */}
-          <div className="svc-card">
-            <div className="svc-top">
-              <div className="svc-ico">✨</div>
-              <div className="svc-n">02</div>
-            </div>
-            <div className="svc-name">
-              {content.svc2_title || "Trần Giật Cấp Nghệ Thuật"}
-            </div>
-            <div className="svc-desc">
-              {content.svc2_desc ||
-                "Thiết kế và thi công trần giật cấp 2–4 tầng, tích hợp hệ đèn LED âm trần, cắt chỉ nổi. Tạo chiều sâu không gian và điểm nhấn sang trọng."}
-            </div>
-            <div className="svc-price">
-              {content.svc2_price || "Từ 145.000đ/m²"}{" "}
-              <span className="svc-arrow">→</span>
-            </div>
-          </div>
-          {/* Card 3 */}
-          <div className="svc-card">
-            <div className="svc-top">
-              <div className="svc-ico">🪟</div>
-              <div className="svc-n">03</div>
-            </div>
-            <div className="svc-name">
-              {content.svc3_title || "Vách Ngăn Thạch Cao"}
-            </div>
-            <div className="svc-desc">
-              {content.svc3_desc ||
-                "Vách ngăn khung thép mạ kẽm, tấm thạch cao tiêu chuẩn hoặc chống ẩm. Cách âm, cách nhiệt vượt trội. Linh hoạt bố cục không gian sống."}
-            </div>
-            <div className="svc-price">
-              {content.svc3_price || "Từ 180.000đ/m²"}{" "}
-              <span className="svc-arrow">→</span>
-            </div>
-          </div>
-          {/* Card 4 */}
-          <div className="svc-card">
-            <div className="svc-top">
-              <div className="svc-ico">🎨</div>
-              <div className="svc-n">04</div>
-            </div>
-            <div className="svc-name">
-              {content.svc4_title || "Phào Chỉ & Trang Trí"}
-            </div>
-            <div className="svc-desc">
-              {content.svc4_desc ||
-                "Thi công phào chỉ thạch cao ốp tường, trần. Hoa văn cổ điển đến hiện đại, phào góc bo, gờ nổi. Hoàn thiện chi tiết tinh xảo."}
-            </div>
-            <div className="svc-price">
-              {content.svc4_price || "Từ 120.000đ/md"}{" "}
-              <span className="svc-arrow">→</span>
-            </div>
-          </div>
-          {/* Card 5 */}
-          <div className="svc-card">
-            <div className="svc-top">
-              <div className="svc-ico">🖌️</div>
-              <div className="svc-n">05</div>
-            </div>
-            <div className="svc-name">
-              {content.svc5_title || "Bả Bột & Sơn Nước"}
-            </div>
-            <div className="svc-desc">
-              {content.svc5_desc ||
-                "Bả Matit 2–3 lớp, xử lý bề mặt trơn mịn hoàn hảo. Thi công sơn nước Dulux, Jotun, Kova nội ngoại thất. Màu sắc theo yêu cầu."}
-            </div>
-            <div className="svc-price">
-              {content.svc5_price || "Từ 55.000đ/m²"}{" "}
-              <span className="svc-arrow">→</span>
-            </div>
-          </div>
-          {/* Card 6 */}
-          <div className="svc-card">
-            <div className="svc-top">
-              <div className="svc-ico">🏗️</div>
-              <div className="svc-n">06</div>
-            </div>
-            <div className="svc-name">
-              {content.svc6_title || "Cung Cấp Vật Liệu"}
-            </div>
-            <div className="svc-desc">
-              {content.svc6_desc ||
-                "Phân phối tấm thạch cao Knauf, USG, Vĩnh Tường; khung thép mạ kẽm; bông khoáng; phụ kiện. Giao tận công trình toàn TP.HCM, Bình Dương."}
-            </div>
-            <div className="svc-price">
-              {content.svc6_price || "Giá sỉ tốt nhất"}{" "}
-              <span className="svc-arrow">→</span>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* ABOUT */}
       <section id="about">
-        <div className="about-visual rv-l">
+        <div className="about-visual">
           <div className="about-ring-outer">
             <div className="about-ring-inner">
-              <div className="arc-num">{content.about_years || "15+"}</div>
+              <div className="arc-num">{content.about_years || "15"}+</div>
               <div className="arc-lbl">
                 Năm
                 <br />
@@ -670,7 +512,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
             <div className="badge">Vĩnh Tường</div>
           </div>
         </div>
-        <div className="about-text rv-r">
+        <div className="about-text">
           <div className="sec-eyebrow">Về Chúng Tôi</div>
           <h2 className="sec-title">
             {content.about_title || "Hơn 15 Năm Xây Dựng Niềm Tin"}
@@ -683,48 +525,40 @@ export default function LandingPage({ onNavigateToAdmin }) {
             <div className="feat">
               <div className="feat-ico">🏆</div>
               <div>
-                <div className="feat-title">
-                  {content.about_feat1_title || "Đội Ngũ Thợ Chuyên Nghiệp"}
-                </div>
+                <div className="feat-title">Đội Ngũ Thợ Chuyên Nghiệp</div>
                 <div className="feat-desc">
-                  {content.about_feat1_desc ||
-                    "30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG."}
+                  30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài
+                  bản theo tiêu chuẩn Knauf & USG.
                 </div>
               </div>
             </div>
             <div className="feat">
               <div className="feat-ico">📋</div>
               <div>
-                <div className="feat-title">
-                  {content.about_feat2_title || "Báo Giá Minh Bạch"}
-                </div>
+                <div className="feat-title">Báo Giá Minh Bạch</div>
                 <div className="feat-desc">
-                  {content.about_feat2_desc ||
-                    "Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng hạng mục, vật tư rõ ràng ngay từ đầu."}
+                  Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng
+                  hạng mục, vật tư rõ ràng ngay từ đầu.
                 </div>
               </div>
             </div>
             <div className="feat">
               <div className="feat-ico">⚡</div>
               <div>
-                <div className="feat-title">
-                  {content.about_feat3_title || "Tiến Độ Đúng Cam Kết"}
-                </div>
+                <div className="feat-title">Tiến Độ Đúng Cam Kết</div>
                 <div className="feat-desc">
-                  {content.about_feat3_desc ||
-                    "Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày, không gây ảnh hưởng đến sinh hoạt."}
+                  Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày,
+                  không gây ảnh hưởng đến sinh hoạt.
                 </div>
               </div>
             </div>
             <div className="feat">
               <div className="feat-ico">🛡️</div>
               <div>
-                <div className="feat-title">
-                  {content.about_feat4_title || "Bảo Hành 24 Tháng"}
-                </div>
+                <div className="feat-title">Bảo Hành 24 Tháng</div>
                 <div className="feat-desc">
-                  {content.about_feat4_desc ||
-                    "Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì miễn phí sau thời gian bảo hành."}
+                  Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì
+                  miễn phí sau thời gian bảo hành.
                 </div>
               </div>
             </div>
@@ -732,11 +566,11 @@ export default function LandingPage({ onNavigateToAdmin }) {
         </div>
       </section>
 
-      {/* GALLERY */}
+      {/* GALLERY CÔNG TRÌNH - Swipe/Drag Carousel */}
       <section id="gallery">
-        <div className="sec-eyebrow rv">Dự Án Tiêu Biểu</div>
-        <h2 className="sec-title rv d1">Công Trình Đã Thực Hiện</h2>
-        <div className="gallery-filters rv d2" id="gallery-filters">
+        <div className="sec-eyebrow">Dự Án Tiêu Biểu</div>
+        <h2 className="sec-title">Công Trình Đã Thực Hiện</h2>
+        <div className="gallery-filters">
           {[
             "all",
             "Căn Hộ",
@@ -747,28 +581,26 @@ export default function LandingPage({ onNavigateToAdmin }) {
           ].map((cat) => (
             <button
               key={cat}
-              className={`filter-btn ${currentCat === cat ? "active" : ""}`}
-              onClick={() => filterG(cat)}
+              className={`filter-btn ${activeCategory === cat ? "active" : ""}`}
+              onClick={() => handleFilter(cat)}
             >
               {cat === "all" ? "Tất Cả" : cat}
             </button>
           ))}
         </div>
 
-        {loading ? (
+        {loadingGallery ? (
           <div
             id="gallery-loading"
             style={{
               textAlign: "center",
               padding: "4rem",
               color: "var(--muted)",
-              fontSize: "0.95rem",
             }}
           >
             <div
               style={{
                 fontSize: "2rem",
-                marginBottom: "1rem",
                 animation: "spin 1s linear infinite",
                 display: "inline-block",
               }}
@@ -776,91 +608,64 @@ export default function LandingPage({ onNavigateToAdmin }) {
               ⟳
             </div>
             <br />
-            Đang tải công trình...
+            Đang tải dữ liệu dự án...
           </div>
         ) : filteredItems.length === 0 ? (
           <div
-            id="gallery-empty"
             style={{
               textAlign: "center",
               padding: "4rem",
               color: "var(--muted)",
             }}
           >
-            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🏗️</div>
-            <div
-              style={{
-                fontSize: "1rem",
-                marginBottom: "0.5rem",
-                color: "var(--text)",
-              }}
-            >
-              Chưa có công trình nào
-            </div>
-            <div style={{ fontSize: "0.85rem" }}>
-              Vào trang Admin để thêm công trình đầu tiên
-            </div>
+            Không tìm thấy công trình nào.
           </div>
         ) : (
           <div
-            className="gallery-grid rv d3"
-            id="gallery-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                filteredItems.length === 1
-                  ? "1fr"
-                  : filteredItems.length <= 3
-                  ? "repeat(3, 1fr)"
-                  : "repeat(4, 1fr)",
-              gridAutoRows: filteredItems.length <= 3 ? "280px" : "220px",
-            }}
+            ref={gridRef}
+            className={`gallery-grid ${
+              filteredItems.length > 6 ? "grid-scroll-active" : ""
+            } ${isGrabbing ? "grabbing" : ""}`}
+            onMouseDown={onMouseDown}
+            onMouseLeave={onMouseLeave}
+            onMouseUp={onMouseUp}
+            onMouseMove={onMouseMove}
+            style={{ display: "grid" }}
           >
-            {filteredItems.map((item, i) => {
-              const images = item.image
-                ? item.image
-                    .split(/[\s,\n\t]+/)
-                    .filter((url) => url.trim() !== "")
-                : [];
-              const hasImg = images.length > 0;
-              const mainImg = hasImg ? images[0] : "";
-              const emoji = CAT_EMOJI[item.category] || "🏗️";
-              const fallback = FALLBACK_BG[i % FALLBACK_BG.length];
+            {filteredItems.map((item, idx) => {
+              const imageList = item.image ? item.image.split("|") : [];
+              const firstImage = imageList[0] || "";
+              const hasImg = firstImage.trim() !== "";
+              const fallback = FALLBACK_BG[idx % FALLBACK_BG.length];
               const bgStyle = hasImg
-                ? `url('${encodeURI(mainImg)}') center/cover no-repeat`
-                : fallback;
-              const spanStyle =
-                i === 0 && filteredItems.length >= 4
-                  ? { gridColumn: "span 2", gridRow: "span 2" }
-                  : i === 3 && filteredItems.length >= 5
-                  ? { gridColumn: "span 2" }
-                  : {};
-              const idNum = item.id ? item.id.toString().replace("CT", "") : "";
-              const year =
-                idNum && !isNaN(idNum) ? new Date(+idNum).getFullYear() : "";
+                ? {
+                    background: `url(${encodeURI(
+                      formatDriveUrl(firstImage)
+                    )}) center/cover no-repeat`,
+                  }
+                : { background: fallback };
 
               return (
                 <div
                   key={item.id}
                   className="g-item"
-                  style={spanStyle}
-                  onClick={() => handleOpenLightbox(item)}
+                  onClick={() => {
+                    if (!isGrabbing) {
+                      setActiveGalleryProject(item);
+                      setCurrentPhotoIdx(0);
+                    }
+                  }}
                 >
-                  <div
-                    className="g-bg"
-                    style={{
-                      background: bgStyle,
-                      fontSize:
-                        i === 0 && filteredItems.length >= 4 ? "9rem" : "5rem",
-                    }}
-                  >
-                    {hasImg ? "" : emoji}
+                  <div className="g-bg" style={bgStyle}>
+                    {!hasImg && (CAT_EMOJI[item.category] || "🏗️")}
                   </div>
                   <div className="g-overlay"></div>
                   <div className="g-info">
                     <div className="g-cat">
-                      {item.category} {year ? `· ${year}` : ""}{" "}
-                      {images.length > 1 ? `(${images.length} ảnh)` : ""}
+                      {item.category}{" "}
+                      {imageList.length > 1
+                        ? `(📸 ${imageList.length} ảnh)`
+                        : ""}
                     </div>
                     <div className="g-title">{item.title}</div>
                     <div className="g-area">
@@ -875,92 +680,84 @@ export default function LandingPage({ onNavigateToAdmin }) {
         )}
       </section>
 
-      {/* ALBUM LIGHTBOX POPUP MODAL */}
-      {activeProject && (
-        <div className="lightbox-bg" onClick={() => setActiveProject(null)}>
-          <div className="lightbox-modal" onClick={(e) => e.stopPropagation()}>
+      {/* LIGHTBOX SLIDESHOW MODAL */}
+      {activeGalleryProject && (
+        <div
+          className="lightbox-modal"
+          onClick={() => setActiveGalleryProject(null)}
+        >
+          <div
+            className="lightbox-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="lightbox-close"
-              onClick={() => setActiveProject(null)}
+              onClick={() => setActiveGalleryProject(null)}
             >
               ✕
             </button>
-
-            <div className="lightbox-main">
-              {activeProject.imageList.length > 0 ? (
+            <div className="lightbox-main-view">
+              {activeGalleryProject.image ? (
                 <img
+                  src={formatDriveUrl(
+                    activeGalleryProject.image.split("|")[currentPhotoIdx]
+                  )}
+                  alt=""
                   className="lightbox-img"
-                  src={activeProject.imageList[activeImgIndex]}
-                  alt={activeProject.title}
                 />
               ) : (
-                <div style={{ fontSize: "5rem" }}>
-                  {CAT_EMOJI[activeProject.category] || "🏗️"}
+                <div className="lightbox-no-img">
+                  {CAT_EMOJI[activeGalleryProject.category]}
                 </div>
               )}
-
-              {activeProject.imageList.length > 1 && (
-                <>
-                  <button
-                    className="lightbox-arrow lightbox-arrow-left"
-                    onClick={handlePrevImg}
-                  >
-                    ◀
-                  </button>
-                  <button
-                    className="lightbox-arrow lightbox-arrow-right"
-                    onClick={handleNextImg}
-                  >
-                    ▶
-                  </button>
-                </>
-              )}
+              {activeGalleryProject.image &&
+                activeGalleryProject.image.split("|").length > 1 && (
+                  <>
+                    <button
+                      className="lightbox-prev"
+                      onClick={() =>
+                        setCurrentPhotoIdx((prev) =>
+                          prev === 0
+                            ? activeGalleryProject.image.split("|").length - 1
+                            : prev - 1
+                        )
+                      }
+                    >
+                      ⟨
+                    </button>
+                    <button
+                      className="lightbox-next"
+                      onClick={() =>
+                        setCurrentPhotoIdx((prev) =>
+                          prev ===
+                          activeGalleryProject.image.split("|").length - 1
+                            ? 0
+                            : prev + 1
+                        )
+                      }
+                    >
+                      ⟩
+                    </button>
+                  </>
+                )}
             </div>
-
-            <div className="lightbox-side">
-              <div className="lightbox-meta">
-                <div className="lightbox-cat">{activeProject.category}</div>
-                <h3 className="lightbox-title">{activeProject.title}</h3>
-                <div
-                  className="lightbox-desc"
-                  style={{
-                    fontSize: "0.82rem",
-                    color: "var(--muted)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.5rem",
-                  }}
-                >
-                  {activeProject.location && (
-                    <span>📍 Địa điểm: {activeProject.location}</span>
-                  )}
-                  {activeProject.size && (
-                    <span>📐 Diện tích: {activeProject.size}</span>
-                  )}
-                  {activeProject.imageList.length > 1 && (
-                    <span>
-                      🖼️ Ảnh {activeImgIndex + 1} /{" "}
-                      {activeProject.imageList.length}
-                    </span>
-                  )}
-                </div>
+            <div className="lightbox-footer">
+              <div>
+                <h3 className="lightbox-title">{activeGalleryProject.title}</h3>
+                <p className="lightbox-meta">
+                  📍 {activeGalleryProject.location}{" "}
+                  {activeGalleryProject.size
+                    ? `· ${activeGalleryProject.size}`
+                    : ""}
+                </p>
               </div>
-
-              {activeProject.imageList.length > 1 && (
-                <div className="lightbox-thumbs">
-                  {activeProject.imageList.map((imgUrl, idx) => (
-                    <img
-                      key={idx}
-                      className={`lightbox-thumb ${
-                        idx === activeImgIndex ? "active" : ""
-                      }`}
-                      src={imgUrl}
-                      alt="Thumbnail"
-                      onClick={() => setActiveImgIndex(idx)}
-                    />
-                  ))}
-                </div>
-              )}
+              {activeGalleryProject.image &&
+                activeGalleryProject.image.split("|").length > 1 && (
+                  <div className="lightbox-counter">
+                    {currentPhotoIdx + 1} /{" "}
+                    {activeGalleryProject.image.split("|").length}
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -968,29 +765,26 @@ export default function LandingPage({ onNavigateToAdmin }) {
 
       {/* CALCULATOR */}
       <section id="calc">
-        <div className="sec-eyebrow rv">Công Cụ</div>
-        <h2 className="sec-title rv d1">
+        <div className="sec-eyebrow">Công Cụ</div>
+        <h2 className="sec-title">
           Tính Chi Phí{" "}
           <em style={{ color: "var(--accent)", fontStyle: "italic" }}>
             Ngay & Luôn
           </em>
         </h2>
-        <p className="sec-desc rv d2" style={{ marginBottom: "4rem" }}>
+        <p className="sec-desc" style={{ marginBottom: "4rem" }}>
           Nhập thông tin để nhận ước tính chi phí nhanh. Báo giá chính xác sau
           khi khảo sát thực tế miễn phí.
         </p>
-        <div className="calc-wrap rv">
+        <div className="calc-wrap">
           <div className="calc-form">
             <div className="calc-title-bar">Thông Tin Công Trình</div>
             <div className="form-row">
               <label className="form-label">Loại Dịch Vụ</label>
               <select
                 className="form-select"
-                value={calcParams.svc}
-                onChange={(e) => {
-                  setCalcParams({ ...calcParams, svc: +e.target.value });
-                  setCalcActive(true);
-                }}
+                id="svcType"
+                onChange={(e) => handleCalc("svc", e.target.value)}
               >
                 <option value="95000">
                   Trần Thạch Cao Phẳng (từ 95.000đ/m²)
@@ -1019,10 +813,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
                   max="1000"
                   step="5"
                   value={calcParams.area}
-                  onChange={(e) => {
-                    setCalcParams({ ...calcParams, area: +e.target.value });
-                    setCalcActive(true);
-                  }}
+                  onChange={(e) => handleCalc("area", e.target.value)}
                 />
               </div>
             </div>
@@ -1030,11 +821,8 @@ export default function LandingPage({ onNavigateToAdmin }) {
               <label className="form-label">Chất Lượng Vật Liệu</label>
               <select
                 className="form-select"
-                value={calcParams.mat}
-                onChange={(e) => {
-                  setCalcParams({ ...calcParams, mat: +e.target.value });
-                  setCalcActive(true);
-                }}
+                id="matQ"
+                onChange={(e) => handleCalc("mat", e.target.value)}
               >
                 <option value="1.0">Tiêu Chuẩn</option>
                 <option value="1.3">Cao Cấp (Knauf, USG)</option>
@@ -1045,11 +833,8 @@ export default function LandingPage({ onNavigateToAdmin }) {
               <label className="form-label">Loại Công Trình</label>
               <select
                 className="form-select"
-                value={calcParams.build}
-                onChange={(e) => {
-                  setCalcParams({ ...calcParams, build: +e.target.value });
-                  setCalcActive(true);
-                }}
+                id="buildT"
+                onChange={(e) => handleCalc("build", e.target.value)}
               >
                 <option value="1.0">Căn Hộ / Nhà Phố</option>
                 <option value="1.1">Văn Phòng / Thương Mại</option>
@@ -1057,18 +842,17 @@ export default function LandingPage({ onNavigateToAdmin }) {
                 <option value="0.95">Nhà Xưởng / Kho Bãi</option>
               </select>
             </div>
-            <button className="calc-btn" onClick={() => setCalcActive(true)}>
+            <button
+              className="calc-btn"
+              onClick={() => handleCalc("area", calcParams.area)}
+            >
               🔢 Tính Chi Phí Ngay
             </button>
           </div>
           <div className="calc-result">
-            <div className={`result-box ${calcActive ? "active" : ""}`}>
+            <div className="result-box active">
               <div className="result-label">Ước Tính Chi Phí Nhân Công</div>
-              <div className="result-price">
-                {calcParams.svc === 0
-                  ? "Liên hệ báo giá"
-                  : `${calcTotal.toLocaleString("vi-VN")}đ`}
-              </div>
+              <div className="result-price">{calcResult}</div>
               <div className="result-unit">Chưa bao gồm VAT & vật liệu</div>
               <div className="result-bd">
                 <div className="rb-item">
@@ -1079,8 +863,8 @@ export default function LandingPage({ onNavigateToAdmin }) {
                   <span className="rb-label">Đơn giá nhân công</span>
                   <span className="rb-val">
                     {calcParams.svc === 0
-                      ? "Thoả thuận"
-                      : `${calcParams.svc.toLocaleString("vi-VN")}đ/m²`}
+                      ? "Liên hệ"
+                      : calcParams.svc.toLocaleString("vi-VN") + "đ/m²"}
                   </span>
                 </div>
                 <div className="rb-item">
@@ -1094,11 +878,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
                 <div className="rb-div"></div>
                 <div className="rb-item rb-total">
                   <span className="rb-label">Tổng ước tính</span>
-                  <span className="rb-val">
-                    {calcParams.svc === 0
-                      ? "Liên hệ báo giá"
-                      : `${calcTotal.toLocaleString("vi-VN")}đ`}
-                  </span>
+                  <span className="rb-val">{calcResult}</span>
                 </div>
               </div>
             </div>
@@ -1115,180 +895,136 @@ export default function LandingPage({ onNavigateToAdmin }) {
 
       {/* MATERIALS */}
       <section id="materials">
-        <div className="sec-eyebrow rv">Vật Liệu</div>
-        <h2 className="sec-title rv d1">Nguồn Hàng Chính Hãng</h2>
-        <p className="sec-desc rv d2" style={{ marginBottom: "0" }}>
+        <div className="sec-eyebrow">Vật Liệu</div>
+        <h2 className="sec-title">Nguồn Hàng Chính Hãng</h2>
+        <p className="sec-desc" style={{ marginBottom: "4rem" }}>
           Phân phối trực tiếp từ nhà sản xuất và nhập khẩu ủy quyền. Đảm bảo
           nguồn gốc rõ ràng, đầy đủ CO/CQ.
         </p>
-        <div className="mat-grid rv">
-          <div className="mat-card">
-            <div className="mat-ico-big">🧱</div>
-            <div className="mat-brand">Knauf · USG · Vĩnh Tường</div>
-            <div className="mat-name">Tấm Thạch Cao Tiêu Chuẩn</div>
-            <div className="mat-desc">
-              Tấm 9mm, 12mm, 15mm. Dùng cho trần phẳng, trần thả, vách ngăn
-              thông thường.
+        <div className="mat-grid">
+          {[
+            {
+              brand: "Knauf · USG · Vĩnh Tường",
+              name: "Tấm Thạch Cao Tiêu Chuẩn",
+              desc: "Tấm 9mm, 12mm, 15mm. Dùng cho trần phẳng, trần thả, vách ngăn thông thường.",
+              tags: ["9.5mm", "12mm", "15mm"],
+              ico: "🧱",
+            },
+            {
+              brand: "Knauf Aquapanel",
+              name: "Tấm Thạch Cao Chống Ẩm",
+              desc: "Lõi thạch cao phụ gia chống ẩm đặc biệt. Dùng cho phòng tắm, bếp, khu vực ẩm ướt.",
+              tags: ["Chống Ẩm", "12mm", "Xanh Lá"],
+              ico: "💧",
+            },
+            {
+              brand: "USG Sheetrock",
+              name: "Tấm Thạch Cao Chống Cháy",
+              desc: "Lõi chứa Micro Silica & sợi thủy tinh. Đạt tiêu chuẩn chống cháy PCCC quốc tế.",
+              tags: ["Chống Cháy", "REI 60"],
+              ico: "🔥",
+            },
+            {
+              brand: "Vĩnh Tường · Gyproc",
+              name: "Khung Thép Mạ Kẽm",
+              desc: "Thanh C, U, V mạ kẽm nhúng nóng dày 0.45–0.55mm. Chống gỉ, bền 30 năm.",
+              tags: ["Thanh C", "Thanh U", "Mạ Kẽm"],
+              ico: "🔩",
+            },
+            {
+              brand: "Rockwool · Isover",
+              name: "Bông Khoáng Cách Nhiệt",
+              desc: "Bông khoáng mật độ cao. Cách nhiệt & cách âm vượt trội, không cháy lan.",
+              tags: ["Cách Âm", "Cách Nhiệt"],
+              ico: "🌡",
+            },
+            {
+              brand: "Dulux · Jotun · Kova",
+              name: "Bột Bả & Sơn Nước",
+              desc: "Bột trét Matit, Sika. Sơn nội ngoại thất cao cấp. Đủ màu theo NCS, RAL, Pantone.",
+              tags: ["Nội Thất", "Ngoại Thất"],
+              ico: "🎨",
+            },
+            {
+              brand: "Hilti · Fischer · Knauf",
+              name: "Phụ Kiện Thi Công",
+              desc: "Vít, băng lưới, hợp chất trám khe, kẹp trần, ty treo, nẹp góc inox chuyên dụng.",
+              tags: ["Vít", "Băng Lưới", "Nẹp Góc"],
+              ico: "🔧",
+            },
+            {
+              brand: "Giao Hàng Toàn TP.HCM",
+              name: "Mua Sỉ & Lẻ",
+              desc: "Giá sỉ ưu đãi từ 100m². Giao hàng trong ngày tại TP.HCM, Bình Dương, Long An.",
+              tags: ["Trong Ngày", "Giá Sỉ", "COD"],
+              ico: "🚚",
+            },
+          ].map((mat, idx) => (
+            <div key={idx} className="mat-card">
+              <div className="mat-ico-big">{mat.ico}</div>
+              <div className="mat-brand">{mat.brand}</div>
+              <div className="mat-name">{mat.name}</div>
+              <div className="mat-desc">{mat.desc}</div>
+              <div className="mat-tags">
+                {mat.tags.map((tag, tIdx) => (
+                  <span key={tIdx} className="mat-tag">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="mat-tags">
-              <span className="mat-tag">9.5mm</span>
-              <span className="mat-tag">12mm</span>
-              <span className="mat-tag">15mm</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">💧</div>
-            <div className="mat-brand">Knauf Aquapanel</div>
-            <div className="mat-name">Tấm Thạch Cao Chống Ẩm</div>
-            <div className="mat-desc">
-              Lõi thạch cao phụ gia chống ẩm đặc biệt. Dùng cho phòng tắm, bếp,
-              khu vực ẩm ướt.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Chống Ẩm</span>
-              <span className="mat-tag">12mm</span>
-              <span className="mat-tag">Xanh Lá</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">🔥</div>
-            <div className="mat-brand">USG Sheetrock</div>
-            <div className="mat-name">Tấm Thạch Cao Chống Cháy</div>
-            <div className="mat-desc">
-              Lõi chứa Micro Silica & sợi thủy tinh. Đạt tiêu chuẩn chống cháy
-              PCCC quốc tế.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Chống Cháy</span>
-              <span className="mat-tag">REI 60</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">🔩</div>
-            <div className="mat-brand">Vĩnh Tường · Gyproc</div>
-            <div className="mat-name">Khung Thép Mạ Kẽm</div>
-            <div className="mat-desc">
-              Thanh C, U, V mạ kẽm nhúng nóng dày 0.45–0.55mm. Chống gỉ, bền 30
-              năm.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Thanh C</span>
-              <span className="mat-tag">Thanh U</span>
-              <span className="mat-tag">Mạ Kẽm</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">🌡️</div>
-            <div className="mat-brand">Rockwool · Isover</div>
-            <div className="mat-name">Bông Khoáng Cách Nhiệt</div>
-            <div className="mat-desc">
-              Bông khoáng mật độ cao. Cách nhiệt & cách âm vượt trội, không cháy
-              lan.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Cách Âm</span>
-              <span className="mat-tag">Cách Nhiệt</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">🎨</div>
-            <div className="mat-brand">Dulux · Jotun · Kova</div>
-            <div className="mat-name">Bột Bả & Sơn Nước</div>
-            <div className="mat-desc">
-              Bột trét Matit, Sika. Sơn nội ngoại thất cao cấp. Đủ màu theo NCS,
-              RAL, Pantone.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Nội Thất</span>
-              <span className="mat-tag">Ngoại Thất</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">🔧</div>
-            <div className="mat-brand">Hilti · Fischer · Knauf</div>
-            <div className="mat-name">Phụ Kiện Thi Công</div>
-            <div className="mat-desc">
-              Vít, băng lưới, hợp chất trám khe, kẹp trần, ty treo, nẹp góc inox
-              chuyên dụng.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Vít</span>
-              <span className="mat-tag">Băng Lưới</span>
-              <span className="mat-tag">Nẹp Góc</span>
-            </div>
-          </div>
-          <div className="mat-card">
-            <div className="mat-ico-big">🚚</div>
-            <div className="mat-brand">Giao Hàng Toàn TP.HCM</div>
-            <div className="mat-name">Mua Sỉ & Lẻ</div>
-            <div className="mat-desc">
-              Giá sỉ ưu đãi từ 100m². Giao hàng trong ngày tại TP.HCM, Bình
-              Dương, Long An.
-            </div>
-            <div className="mat-tags">
-              <span className="mat-tag">Trong Ngày</span>
-              <span className="mat-tag">Giá Sỉ</span>
-              <span className="mat-tag">COD</span>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* PROCESS */}
       <section id="process">
         <div style={{ textAlign: "center" }}>
-          <div className="sec-eyebrow rv" style={{ justifyContent: "center" }}>
+          <div className="sec-eyebrow" style={{ justifyContent: "center" }}>
             Quy Trình
           </div>
-          <h2 className="sec-title rv d1" style={{ textAlign: "center" }}>
-            5 Bước Đến Công Trình Hoàn Hảo
-          </h2>
+          <h2 className="sec-title">5 Bước Đến Công Trình Hoàn Hảo</h2>
         </div>
-        <div className="process-grid rv d2">
-          <div className="proc-step">
-            <div className="proc-num">01</div>
-            <div className="proc-ico">📞</div>
-            <div className="proc-name">Liên Hệ & Tư Vấn</div>
-            <div className="proc-desc">
-              Gọi hotline hoặc nhắn Zalo. Tư vấn sơ bộ giải pháp và vật liệu phù
-              hợp.
+        <div className="process-grid">
+          {[
+            {
+              num: "01",
+              ico: "📞",
+              name: "Liên Hệ & Tư Vấn",
+              desc: "Gọi hotline hoặc nhắn Zalo. Tư vấn sơ bộ giải pháp và vật liệu phù hợp.",
+            },
+            {
+              num: "02",
+              ico: "📐",
+              name: "Khảo Sát Miễn Phí",
+              desc: "Đội kỹ thuật đến đo đạc, đánh giá thực tế trong 24 giờ. Hoàn toàn miễn phí.",
+            },
+            {
+              num: "03",
+              ico: "📋",
+              name: "Báo Giá & Ký HĐ",
+              desc: "Báo giá chi tiết từng hạng mục. Ký hợp đồng cam kết tiến độ & chất lượng.",
+            },
+            {
+              num: "04",
+              ico: "⚒️",
+              name: "Thi Công Chuyên Nghiệp",
+              desc: "Đội thợ làm việc đúng tiến độ. Dọn dẹp sạch sẽ hàng ngày, báo cáo tiến độ.",
+            },
+            {
+              num: "05",
+              ico: "✅",
+              name: "Bàn Giao & Bảo Hành",
+              desc: "Nghiệm thu kỹ lưỡng. Bảo hành 24 tháng. Hỗ trợ bảo trì trọn đời.",
+            },
+          ].map((step) => (
+            <div key={step.num} className="proc-step">
+              <div className="proc-num">{step.num}</div>
+              <div className="proc-ico">{step.ico}</div>
+              <div className="proc-name">{step.name}</div>
+              <div className="proc-desc">{step.desc}</div>
             </div>
-          </div>
-          <div className="proc-step">
-            <div className="proc-num">02</div>
-            <div className="proc-ico">📐</div>
-            <div className="proc-name">Khảo Sát Miễn Phí</div>
-            <div className="proc-desc">
-              Đội kỹ thuật đến đo đạc, đánh giá thực tế trong 24 giờ. Hoàn toàn
-              miễn phí.
-            </div>
-          </div>
-          <div className="proc-step">
-            <div className="proc-num">03</div>
-            <div className="proc-ico">📋</div>
-            <div className="proc-name">Báo Giá & Ký HĐ</div>
-            <div className="proc-desc">
-              Báo giá chi tiết từng hạng mục. Ký hợp đồng cam kết tiến độ & chất
-              lượng.
-            </div>
-          </div>
-          <div className="proc-step">
-            <div className="proc-num">04</div>
-            <div className="proc-ico">⚒️</div>
-            <div className="proc-name">Thi Công Chuyên Nghiệp</div>
-            <div className="proc-desc">
-              Đội thợ làm việc đúng tiến độ. Dọn dẹp sạch sẽ hàng ngày, báo cáo
-              tiến độ.
-            </div>
-          </div>
-          <div className="proc-step">
-            <div className="proc-num">05</div>
-            <div className="proc-ico">✅</div>
-            <div className="proc-name">Bàn Giao & Bảo Hành</div>
-            <div className="proc-desc">
-              Nghiệm thu kỹ lưỡng. Bảo hành 24 tháng. Hỗ trợ bảo trì trọn đời.
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -1296,10 +1032,10 @@ export default function LandingPage({ onNavigateToAdmin }) {
       <section id="reviews">
         <div className="reviews-head">
           <div>
-            <div className="sec-eyebrow rv">Khách Hàng Nói Gì</div>
-            <h2 className="sec-title rv d1">Đánh Giá Thực Tế</h2>
+            <div className="sec-eyebrow">Khách Hàng Nói Gì</div>
+            <h2 className="sec-title">Đánh Giá Thực Tế</h2>
           </div>
-          <div className="rating-big rv">
+          <div className="rating-big">
             <div className="rating-num">4.9</div>
             <div className="r-stars">
               <div className="stars">★★★★★</div>
@@ -1307,70 +1043,33 @@ export default function LandingPage({ onNavigateToAdmin }) {
             </div>
           </div>
         </div>
-        <div className="reviews-grid rv">
-          <div className="review-card">
-            <div className="review-q">"</div>
-            <div className="review-stars">★★★★★</div>
-            <p className="review-text">
-              ThạchPro hoàn thành toàn bộ trần giật cấp và vách ngăn penthouse
-              450m² chỉ trong 10 ngày. Bề mặt cực kỳ mịn, đường nét sắc sảo, đội
-              thợ sạch sẽ và chuyên nghiệp. Rất hài lòng và sẽ giới thiệu cho
-              bạn bè!
-            </p>
-            <div className="review-author">
-              <div className="review-av">TT</div>
-              <div>
-                <div className="review-name">Anh Nguyễn Văn Tuấn</div>
-                <div className="review-role">Chủ hộ Vinhomes Grand Park</div>
-                <div className="review-proj">
-                  🏠 Căn hộ 450m² · Trần giật cấp
+        <div className="reviews-grid">
+          {reviews.map((item) => (
+            <div key={item.id} className="review-card">
+              <div className="review-q">"</div>
+              <div className="review-stars">
+                {"★".repeat(Number(item.stars || 5))}
+              </div>
+              <p className="review-text">{item.text}</p>
+              <div className="review-author">
+                <div className="review-av">
+                  {item.name ? item.name.charAt(0).toUpperCase() : "T"}
+                </div>
+                <div>
+                  <div className="review-name">{item.name}</div>
+                  <div className="review-role">{item.role}</div>
+                  <div className="review-proj">{item.project}</div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="review-card">
-            <div className="review-q">"</div>
-            <div className="review-stars">★★★★★</div>
-            <p className="review-text">
-              Đội thợ rất chuyên nghiệp, đúng giờ và sạch sẽ. Báo giá minh bạch,
-              không phát sinh. Văn phòng 1.200m² được hoàn thiện đúng theo bản
-              vẽ thiết kế, chất lượng vượt kỳ vọng của ban lãnh đạo.
-            </p>
-            <div className="review-author">
-              <div className="review-av">NH</div>
-              <div>
-                <div className="review-name">Chị Trần Hồng Nhung</div>
-                <div className="review-role">Giám đốc Công ty TechViet</div>
-                <div className="review-proj">🏢 Văn phòng 1.200m² · Quận 1</div>
-              </div>
-            </div>
-          </div>
-          <div className="review-card">
-            <div className="review-q">"</div>
-            <div className="review-stars">★★★★★</div>
-            <p className="review-text">
-              Mua vật liệu số lượng lớn cho dự án 300 căn hộ. Hàng đúng chủng
-              loại, giao đúng hẹn, giá tốt hơn các đại lý khác. Dịch vụ hậu mãi
-              cũng rất tốt. Sẽ tiếp tục hợp tác dài hạn.
-            </p>
-            <div className="review-author">
-              <div className="review-av">MK</div>
-              <div>
-                <div className="review-name">Anh Lê Minh Khoa</div>
-                <div className="review-role">Nhà thầu xây dựng, Bình Dương</div>
-                <div className="review-proj">
-                  🏗️ Dự án 300 căn hộ · Vật liệu sỉ
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* WHY */}
+      {/* WHY CHOOSE US */}
       <section id="why">
         <div className="why-wrap">
-          <div className="why-visual rv-l">
+          <div className="why-visual">
             <div className="why-card-main">
               <div className="why-grid-bg"></div>
               <div className="why-tag">Cam kết chất lượng</div>
@@ -1391,79 +1090,44 @@ export default function LandingPage({ onNavigateToAdmin }) {
               </div>
             </div>
           </div>
-          <div className="rv-r">
+          <div>
             <div className="sec-eyebrow">Điểm Khác Biệt</div>
-            <h2
-              className="sec-title"
-              dangerouslySetInnerHTML={{
-                __html: content.why_title || "Chúng Tôi Cam Kết<br />Điều Này",
-              }}
-            ></h2>
+            <h2 className="sec-title">
+              Chúng Tôi Cam Kết
+              <br />
+              Điều Này
+            </h2>
             <div className="why-list">
-              <div className="why-item">
-                <div className="why-check">✓</div>
-                <div>
-                  <div className="why-item-title">
-                    {content.why_item1_title ||
-                      "Khảo Sát & Tư Vấn Miễn Phí 100%"}
-                  </div>
-                  <div className="why-item-desc">
-                    {content.why_item1_desc ||
-                      "Đội kỹ thuật đến tận nơi đo đạc, tư vấn giải pháp tối ưu. Không mất bất kỳ chi phí nào."}
-                  </div>
-                </div>
-              </div>
-              <div className="why-item">
-                <div className="why-check">✓</div>
-                <div>
-                  <div className="why-item-title">
-                    {content.why_item2_title ||
-                      "Báo Giá Trọn Gói Không Phát Sinh"}
-                  </div>
-                  <div className="why-item-desc">
-                    {content.why_item2_desc ||
-                      "Hợp đồng rõ ràng từng hạng mục. Cam kết không phát sinh chi phí ngoài thỏa thuận ban đầu."}
-                  </div>
-                </div>
-              </div>
-              <div className="why-item">
-                <div className="why-check">✓</div>
-                <div>
-                  <div className="why-item-title">
-                    {content.why_item3_title || "Đội Thợ Được Đào Tạo Bài Bản"}
-                  </div>
-                  <div className="why-item-desc">
-                    {content.why_item3_desc ||
-                      "30+ thợ lành nghề chuyên về thạch cao, được đào tạo kỹ thuật theo tiêu chuẩn Knauf & USG."}
+              {[
+                {
+                  title: "Khảo Sát & Tư Vấn Miễn Phí 100%",
+                  desc: "Đội kỹ thuật đến tận nơi đo đạc, tư vấn giải pháp tối ưu. Không mất bất kỳ chi phí nào.",
+                },
+                {
+                  title: "Báo Giá Trọn Gói Không Phát Sinh",
+                  desc: "Hợp đồng rõ ràng từng hạng mục. Cam kết không phát sinh chi phí ngoài thỏa thuận ban đầu.",
+                },
+                {
+                  title: "Đội Thợ Được Đào Tạo Bài Bản",
+                  desc: "30+ thợ lành nghề chuyên về thạch cao, được đào tạo kỹ thuật theo tiêu chuẩn Knauf & USG.",
+                },
+                {
+                  title: "Bảo Hành 24 Tháng Toàn Bộ Hạng Mục",
+                  desc: "Bảo hành dài nhất trong ngành. Hỗ trợ bảo trì sau bảo hành với chi phí ưu đãi.",
+                },
+                {
+                  title: "Vật Liệu Chính Hãng Có Chứng Nhận",
+                  desc: "Chỉ sử dụng vật liệu có CO/CQ đầy đủ. Đại lý ủy quyền Knauf, USG, Vĩnh Tường.",
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="why-item">
+                  <div className="why-check">✓</div>
+                  <div>
+                    <div className="why-item-title">{item.title}</div>
+                    <div className="why-item-desc">{item.desc}</div>
                   </div>
                 </div>
-              </div>
-              <div className="why-item">
-                <div className="why-check">✓</div>
-                <div>
-                  <div className="why-item-title">
-                    {content.why_item4_title ||
-                      "Bảo Hành 24 Tháng Toàn Bộ Hạng Mục"}
-                  </div>
-                  <div className="why-item-desc">
-                    {content.why_item4_desc ||
-                      "Bảo hành dài nhất trong ngành. Hỗ trợ bảo trì sau bảo hành với chi phí ưu đãi."}
-                  </div>
-                </div>
-              </div>
-              <div className="why-item">
-                <div className="why-check">✓</div>
-                <div>
-                  <div className="why-item-title">
-                    {content.why_item5_title ||
-                      "Vật Liệu Chính Hãng Có Chứng Nhận"}
-                  </div>
-                  <div className="why-item-desc">
-                    {content.why_item5_desc ||
-                      "Chỉ sử dụng vật liệu có CO/CQ đầy đủ. Đại lý ủy quyền Knauf, USG, Vĩnh Tường."}
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -1472,29 +1136,25 @@ export default function LandingPage({ onNavigateToAdmin }) {
       {/* CTA */}
       <section id="cta">
         <div className="cta-inner">
-          <div className="cta-text rv">
+          <div className="cta-text">
             <h2
               dangerouslySetInnerHTML={{
                 __html:
-                  content.cta_title || "Bắt Đầu Dự Án<br>Của Bạn Hôm Hiện Tại",
+                  content.cta_title || "Bắt Đầu Dự Án<br/>Của Bạn Hôm Nay",
               }}
             ></h2>
-            <p
-              dangerouslySetInnerHTML={{
-                __html:
-                  content.cta_desc ||
-                  "Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.",
-              }}
-            ></p>
+            <p>
+              {content.cta_desc ||
+                "Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực."}
+            </p>
           </div>
-          <div className="cta-actions rv d2">
+          <div className="cta-actions">
             <a
               href={`tel:${content.contact_phone || "0901234567"}`}
               className="btn-cta-dark"
-              dangerouslySetInnerHTML={{
-                __html: content.cta_btn || "📞 Gọi Ngay: 0901 234 567",
-              }}
-            ></a>
+            >
+              {content.cta_btn || "📞 Gọi Ngay: 0901 234 567"}
+            </a>
             <div className="cta-phone-big">
               {content.contact_phone || "0901 234 567"}
             </div>
@@ -1503,22 +1163,22 @@ export default function LandingPage({ onNavigateToAdmin }) {
         </div>
       </section>
 
-      {/* CONTACT FORM */}
+      {/* CONTACT & MAP WITH CLICKABLE INTERACTION */}
       <section id="contact">
-        <div className="sec-eyebrow rv">Liên Hệ</div>
-        <h2 className="sec-title rv d1">
+        <div className="sec-eyebrow">Liên Hệ</div>
+        <h2 className="sec-title">
           Đặt Lịch Khảo Sát
           <br />
           <em style={{ color: "var(--accent)", fontStyle: "italic" }}>
             Miễn Phí
           </em>
         </h2>
-        <p className="sec-desc rv d2" style={{ marginBottom: "4rem" }}>
+        <p className="sec-desc" style={{ marginBottom: "4rem" }}>
           Điền form bên dưới — đội kỹ thuật sẽ liên hệ lại trong vòng{" "}
           <strong style={{ color: "var(--accent)" }}>30 phút</strong> để sắp xếp
           lịch khảo sát.
         </p>
-        <div className="contact-wrap rv">
+        <div className="contact-wrap">
           <div>
             <div className="ci-item">
               <div className="ci-icon">📞</div>
@@ -1528,7 +1188,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
                   {content.contact_phone || "0901 234 567"}
                 </div>
                 <div className="ci-sub">
-                  {content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}
+                  {content.contact_hours || "Hotline 7:00–18:00"}
                 </div>
               </div>
             </div>
@@ -1537,7 +1197,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
               <div>
                 <div className="ci-label">Zalo</div>
                 <div className="ci-val">
-                  {content.contact_zalo || "0901 234 567"}
+                  {content.contact_zalo || "Zalo: 0901 234 567"}
                 </div>
                 <div className="ci-sub">
                   Nhắn tin nhận báo giá nhanh trong ngày
@@ -1576,9 +1236,10 @@ export default function LandingPage({ onNavigateToAdmin }) {
               </div>
             </div>
           </div>
+
           <div className="contact-form-box">
             <div className="cf-title">Gửi Yêu Cầu Báo Giá</div>
-            <form onSubmit={handleFormSubmit}>
+            <form onSubmit={submitContact}>
               <div className="cf-row">
                 <div className="cf-field">
                   <label className="cf-label">Họ & Tên *</label>
@@ -1586,9 +1247,9 @@ export default function LandingPage({ onNavigateToAdmin }) {
                     className="cf-input"
                     type="text"
                     placeholder="Nguyễn Văn A"
-                    value={formData.name}
+                    value={contactForm.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setContactForm({ ...contactForm, name: e.target.value })
                     }
                     required
                   />
@@ -1599,9 +1260,9 @@ export default function LandingPage({ onNavigateToAdmin }) {
                     className="cf-input"
                     type="tel"
                     placeholder="0901 234 567"
-                    value={formData.phone}
+                    value={contactForm.phone}
                     onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
+                      setContactForm({ ...contactForm, phone: e.target.value })
                     }
                     required
                   />
@@ -1614,9 +1275,9 @@ export default function LandingPage({ onNavigateToAdmin }) {
                     className="cf-input"
                     type="email"
                     placeholder="email@gmail.com"
-                    value={formData.email}
+                    value={contactForm.email}
                     onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                      setContactForm({ ...contactForm, email: e.target.value })
                     }
                   />
                 </div>
@@ -1624,9 +1285,12 @@ export default function LandingPage({ onNavigateToAdmin }) {
                   <label className="cf-label">Dịch Vụ Quan Tâm</label>
                   <select
                     className="cf-select"
-                    value={formData.service}
+                    value={contactForm.service}
                     onChange={(e) =>
-                      setFormData({ ...formData, service: e.target.value })
+                      setContactForm({
+                        ...contactForm,
+                        service: e.target.value,
+                      })
                     }
                   >
                     <option value="">-- Chọn dịch vụ --</option>
@@ -1647,9 +1311,9 @@ export default function LandingPage({ onNavigateToAdmin }) {
                     className="cf-input"
                     type="text"
                     placeholder="VD: 50 m²"
-                    value={formData.area}
+                    value={contactForm.area}
                     onChange={(e) =>
-                      setFormData({ ...formData, area: e.target.value })
+                      setContactForm({ ...contactForm, area: e.target.value })
                     }
                   />
                 </div>
@@ -1659,9 +1323,12 @@ export default function LandingPage({ onNavigateToAdmin }) {
                     className="cf-input"
                     type="text"
                     placeholder="Quận / Huyện, TP.HCM"
-                    value={formData.address}
+                    value={contactForm.address}
                     onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
+                      setContactForm({
+                        ...contactForm,
+                        address: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -1670,43 +1337,67 @@ export default function LandingPage({ onNavigateToAdmin }) {
                 <label className="cf-label">Ghi Chú / Yêu Cầu Thêm</label>
                 <textarea
                   className="cf-textarea"
-                  placeholder="Mô tả thêm yêu cầu của bạn, thời gian thuận tiện để khảo sát..."
-                  value={formData.note}
+                  placeholder="Mô tả thêm yêu cầu..."
+                  value={contactForm.note}
                   onChange={(e) =>
-                    setFormData({ ...formData, note: e.target.value })
+                    setContactForm({ ...contactForm, note: e.target.value })
                   }
                 ></textarea>
               </div>
-              <button type="submit" className="cf-submit">
-                📩 Gửi Yêu Cầu Báo Giá
+              <button
+                className="cf-submit"
+                type="submit"
+                disabled={contactLoading}
+              >
+                {contactLoading ? "⏳ Đang gửi..." : "📩 Gửi Yêu Cầu Báo Giá"}
               </button>
-              <div className="cf-success" id="cf-success">
-                ✅ Gửi thành công! Chúng tôi sẽ liên hệ lại trong vòng 30 phút.
-                Cảm ơn bạn đã tin tưởng ThạchPro!
-              </div>
+              {contactSuccess && (
+                <div className="cf-success show">
+                  ✅ Gửi thành công! Chúng tôi sẽ liên hệ lại trong vòng 30
+                  phút. Cảm ơn bạn!
+                </div>
+              )}
             </form>
           </div>
         </div>
       </section>
 
-      {/* GOOGLE MAPS */}
+      {/* GOOGLE MAPS WITH CLICK-TO-MAP REDIRECT */}
       <section id="map-section">
         <div className="map-wrap">
-          <iframe
-            className="map-frame"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0282977647386!2d106.71720767587655!3d10.732498089396068!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f9ab4c3a6bf%3A0x4a8a7e5db1d31e1!2zTmd1eeG7hW4gVsSDbiBMaW5oLCBRdeG6rW4gNywgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5o!5e0!3m2!1svi!2svn!4v1700000000000"
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Vị trí ThạchPro"
-          />
+          <div
+            className="map-container-clickable"
+            onClick={() =>
+              window.open(
+                "https://maps.google.com/?q=10.732498,106.717207",
+                "_blank"
+              )
+            }
+            title="Nhấp vào để mở Google Maps chỉ đường"
+          >
+            <div className="map-overlay-trigger">
+              <span>🗺️ Click để mở bản đồ định vị trên Google Maps</span>
+            </div>
+            <iframe
+              className="map-frame"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0282977647386!2d106.71720767587655!3d10.732498089396068!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f9ab4c3a6bf%3A0x4a8a7e5db1d31e1!2zTmd1eeG7hW4gVsSDbiBMaW5oLCBRdeG6rW4gNywgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5o!5e0!3m2!1svi!2svn!4v1700000000000"
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Vị trí ThạchPro"
+              style={{ pointerEvents: "none" }}
+            ></iframe>
+          </div>
           <div className="map-card">
             <div className="map-card-title">
               📍 <span>ThạchPro</span> Showroom
             </div>
             <div className="map-info-row">
               <span className="map-ico">🏠</span>
-              <span>123 Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP.HCM</span>
+              <span>
+                {content.contact_address ||
+                  "123 Nguyễn Văn Linh, Quận 7, TP.HCM"}
+              </span>
             </div>
             <div className="map-info-row">
               <span className="map-ico">📞</span>
@@ -1721,9 +1412,9 @@ export default function LandingPage({ onNavigateToAdmin }) {
               <span>Có bãi đậu xe miễn phí</span>
             </div>
             <a
-              href="https://maps.google.com/?q=Nguyễn+Văn+Linh+Quận+7+TP.HCM"
+              href="https://maps.google.com/?q=10.732498,106.717207"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noreferrer"
               className="map-cta-btn"
             >
               🗺️ Xem Trên Google Maps
@@ -1732,7 +1423,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
         </div>
       </section>
 
-      {/* ZALO + PHONE FLOAT */}
+      {/* FLOATING CONTACT WIDGETS */}
       <div id="zalo-float">
         <div className="zf-row">
           <span className="zf-label">Gọi ngay</span>
@@ -1746,9 +1437,13 @@ export default function LandingPage({ onNavigateToAdmin }) {
         </div>
         <div className="zf-row">
           <a
-            href={`https://zalo.me/${content.contact_phone || "0901234567"}`}
+            href={
+              content.contact_zalo
+                ? `https://zalo.me/${content.contact_zalo.replace(/\s+/g, "")}`
+                : "https://zalo.me/0901234567"
+            }
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noreferrer"
             className="zalo-btn"
             title="Chat Zalo"
           >
@@ -1762,8 +1457,8 @@ export default function LandingPage({ onNavigateToAdmin }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "0.75rem",
-                fontWeight: "900",
+                fontSize: ".75rem",
+                fontWeight: 900,
                 flexShrink: 0,
               }}
             >
@@ -1784,13 +1479,10 @@ export default function LandingPage({ onNavigateToAdmin }) {
                 Thạch<span>Pro</span>
               </span>
             </a>
-            <p
-              dangerouslySetInnerHTML={{
-                __html:
-                  content.footer_desc ||
-                  "Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.",
-              }}
-            ></p>
+            <p>
+              {content.footer_desc ||
+                "Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008."}
+            </p>
             <div className="social-row">
               <a href="#" className="social-btn">
                 f
@@ -1858,7 +1550,7 @@ export default function LandingPage({ onNavigateToAdmin }) {
             </div>
             <div className="fci">
               <span className="fci-ico">💬</span>
-              <div>Zalo: {content.contact_zalo || "0901 234 567"}</div>
+              <div>{content.contact_zalo || "Zalo: 0901 234 567"}</div>
             </div>
             <div className="fci">
               <span className="fci-ico">📧</span>
@@ -1885,6 +1577,6 @@ export default function LandingPage({ onNavigateToAdmin }) {
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 }

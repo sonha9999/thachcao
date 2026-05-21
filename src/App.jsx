@@ -1,20 +1,29 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import LandingPage from "./components/LandingPage";
 import AdminPanel from "./components/AdminPanel";
 
 function App() {
-  const [view, setView] = useState("landing"); // 'landing' hoặc 'admin'
+  const [isAdminRoute, setIsAdminRoute] = useState(false);
 
-  return (
-    <div>
-      {view === "landing" ? (
-        <LandingPage onNavigateToAdmin={() => setView("admin")} />
-      ) : (
-        <AdminPanel onNavigateToHome={() => setView("landing")} />
-      )}
-    </div>
-  );
+  useEffect(() => {
+    // Lấy thông tin đường dẫn và tham số URL hiện tại
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+
+    // Nếu gõ "/admin" hoặc thêm "?admin=true" ở đuôi link web
+    if (
+      path === "/admin" ||
+      path.endsWith("/admin.html") ||
+      params.has("admin")
+    ) {
+      setIsAdminRoute(true);
+    } else {
+      setIsAdminRoute(false);
+    }
+  }, []);
+
+  return <>{isAdminRoute ? <AdminPanel /> : <LandingPage />}</>;
 }
 
 export default App;

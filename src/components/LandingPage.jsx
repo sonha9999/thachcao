@@ -1,3 +1,4 @@
+// src/components/LandingPage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import "../LandingPage.css";
 
@@ -255,11 +256,7 @@ export default function LandingPage() {
 
       {/* HEADER NAV */}
       <nav id="nav">
-        <a
-          href="#"
-          className="logo-wrap"
-          onDoubleClick={() => (window.location.href = "/admin")}
-        >
+        <a href="#" className="logo-wrap">
           <div className="logo-icon">🏠</div>
           <span className="logo-text">
             Thạch<span>Pro</span>

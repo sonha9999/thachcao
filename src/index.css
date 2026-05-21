@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-c0: #0a0b0d;
+  --color-c1: #111318;
+  --color-c2: #1c1f28;
+  --color-c3: #262a36;
+  --color-accent: #e8a020;
+  --color-accent2: #f5c842;
+  --color-text: #f0ede6;
+  --color-muted: #8a8680;
+  --color-line: rgba(232, 160, 32, 0.15);
+  --color-green: #22c55e;
+  --color-red: #ef4444;
+}
+
+:root {
+  --c0: #0a0b0d;
+  --c1: #111318;
+  --c2: #1c1f28;
+  --c3: #262a36;
+  --accent: #e8a020;
+  --accent2: #f5c842;
+  --text: #f0ede6;
+  --muted: #8a8680;
+  --line: rgba(232, 160, 32, 0.15);
+  --green: #22c55e;
+  --red: #ef4444;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--c0);
+  color: var(--text);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+}
+
+@keyframes tick {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  display: flex;
+  gap: 3.5rem;
+  animation: tick 30s linear infinite;
+  white-space: nowrap;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+::-webkit-scrollbar-track {
+  background: var(--c1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+}

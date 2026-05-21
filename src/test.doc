@@ -1,0 +1,2575 @@
+Yêu cầu của bạn vô cùng tuyệt vời và đánh trúng vào hai yếu tố cốt lõi của một trang web nội thất cao cấp: **Tốc độ tải ảnh thực tế** và **tính cơ động của nội dung**.
+
+Hệ thống tải ảnh nguyên bản qua URL hoặc dán link Google Drive thủ công rất dễ gặp lỗi do sai định dạng, đồng thời ảnh gốc tải lên thường có dung lượng quá nặng (từ 2MB - 10MB) làm trang web tải chậm khủng khiếp.
+
+---
+
+### GIẢI PHÁP NÂNG CẤP TOÀN DIỆN:
+1. **Bộ nén & Tự động Crop ảnh thông minh trên Trình duyệt (HTML5 Canvas Engine):**
+   * Trong trang Admin, thay vì dán link thủ công, bạn sẽ chọn tệp ảnh trực tiếp từ máy tính/điện thoại.
+   * Hệ thống sẽ tự động phân tích tỷ lệ ảnh:
+     * **Ảnh ngang (Landscape):** Tự động crop căn giữa về tỷ lệ **3:2** chuẩn mỹ thuật (1200px x 800px).
+     * **Ảnh dọc (Portrait):** Tự động crop về tỷ lệ **2:3** chuẩn kiến trúc (800px x 1200px).
+     * **Ảnh vuông (Square):** Tự động crop về tỷ lệ **1:1** (1000px x 1000px).
+   * Ảnh sau đó được nén tự động về định dạng `.jpg` chất lượng cao (85%) giúp giảm dung lượng từ vài MB xuống **chỉ còn khoảng ~150KB** mà mắt thường không thể thấy sự suy giảm độ sắc nét. Website của bạn sẽ tải nhanh như bay.
+   * Ảnh nén xong được tự động tải thẳng lên **Google Drive** của bạn thông qua Apps Script và lưu trực tiếp link ảnh sạch vào Sheet.
+2. **Quản lý Đánh Giá Khách Hàng động (Thêm/Sửa/Xóa Đánh Giá):**
+   * Chuyển đổi toàn bộ phần đánh giá khách hàng trên trang chủ sang chế độ đọc động từ tab Sheet tên là `reviews`.
+   * Bổ sung một tab quản lý đánh giá khách hàng chuyên biệt trên trang Admin giúp bạn dễ dàng Thêm, Sửa, Xóa các phản hồi thực tế của khách hàng.
+3. **Bổ sung ảnh Header mờ ảo sang trọng:**
+   * Tích hợp thêm khóa `hero_bg` (Ảnh nền Header) vào hệ thống. Bạn có thể chọn tải trực tiếp ảnh nội thất làm nền cho phần đầu trang, kết hợp hiệu ứng mờ và lưới grid bóng bẩy của bản gốc.
+
+---
+
+### MỤC 1: CẬP NHẬT MÃ BACKEND GOOGLE APPS SCRIPT (`Code.gs`)
+Bạn hãy mở Google Sheets > **Tiện ích mở rộng (Extensions)** > **Apps Script**, xóa toàn bộ code cũ trong file `Code.gs` và dán mã mới tích hợp xử lý tải tệp trực tiếp và Đánh Giá dưới đây, sau đó bấm **Triển khai (Deploy)** phiên bản mới:
+
+```javascript
+// Code.gs - Apps Script Web App Backend
+function doGet(e) {
+  var type = e.parameter.type;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. LẤY DỮ LIỆU CÔNG TRÌNH (GALLERY)
+  if (!type) {
+    var sheet = ss.getSheetByName('gallery') || ss.insertSheet('gallery');
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['id', 'title', 'category', 'location', 'size', 'image']);
+    }
+    var data = sheet.getDataRange().getValues();
+    var items = [];
+    for (var i = 1; i < data.length; i++) {
+      items.push({
+        id: data[i][0],
+        title: data[i][1],
+        category: data[i][2],
+        location: data[i][3],
+        size: data[i][4],
+        image: data[i][5]
+      });
+    }
+    return resJSON({ items: items.reverse() });
+  }
+  
+  // 2. LẤY DỮ LIỆU TEXT NỘI DUNG (CONTENT)
+  if (type === 'content') {
+    var sheet = ss.getSheetByName('content') || ss.insertSheet('content');
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['key', 'value']);
+    }
+    var data = sheet.getDataRange().getValues();
+    var content = [];
+    for (var i = 1; i < data.length; i++) {
+      content.push({ key: data[i][0], value: data[i][1] });
+    }
+    return resJSON({ content: content });
+  }
+  
+  // 3. LẤY DANH SÁCH LIÊN HỆ KHÁCH HÀNG (CONTACTS)
+  if (type === 'contacts') {
+    var sheet = ss.getSheetByName('contacts') || ss.insertSheet('contacts');
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['Thời Gian', 'Họ Tên', 'SĐT', 'Email', 'Dịch Vụ', 'Diện Tích', 'Địa Điểm', 'Ghi Chú']);
+    }
+    var rawData = sheet.getDataRange().getValues();
+    var contacts = [];
+    for (var i = 1; i < rawData.length; i++) {
+      var row = rawData[i];
+      var formattedDate = row[0] instanceof Date ? Utilities.formatDate(row[0], Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm") : row[0];
+      contacts.push([formattedDate, row[1], row[2], row[3], row[4], row[5], row[6], row[7]]);
+    }
+    return resJSON({ contacts: contacts.reverse(), sheetUrl: ss.getUrl() });
+  }
+
+  // 4. LẤY DANH SÁCH ĐÁNH GIÁ (REVIEWS)
+  if (type === 'reviews') {
+    var sheet = ss.getSheetByName('reviews') || ss.insertSheet('reviews');
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['id', 'name', 'role', 'text', 'proj', 'stars']);
+    }
+    var data = sheet.getDataRange().getValues();
+    var reviews = [];
+    for (var i = 1; i < data.length; i++) {
+      reviews.push({
+        id: data[i][0],
+        name: data[i][1],
+        role: data[i][2],
+        text: data[i][3],
+        proj: data[i][4],
+        stars: data[i][5]
+      });
+    }
+    return resJSON({ reviews: reviews.reverse() });
+  }
+}
+
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var postData = JSON.parse(e.postData.contents);
+  var type = postData.type;
+
+  // 1. TẢI ẢNH TRỰC TIẾP LÊN GOOGLE DRIVE
+  if (type === 'upload_image') {
+    try {
+      var folder;
+      var folders = DriveApp.getFoldersByName("ThachPro_Images");
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        folder = DriveApp.createFolder("ThachPro_Images");
+      }
+      
+      var decoded = Utilities.base64Decode(postData.base64);
+      var blob = Utilities.newBlob(decoded, postData.contentType, postData.filename);
+      var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      var directUrl = "https://drive.google.com/uc?export=view&id=" + file.getId();
+      return resJSON({ success: true, url: directUrl });
+    } catch (err) {
+      return resJSON({ success: false, error: err.toString() });
+    }
+  }
+
+  // 2. LƯU LIÊN HỆ KHÁCH HÀNG (CONTACT)
+  if (type === 'contact') {
+    var sheet = ss.getSheetByName('contacts') || ss.insertSheet('contacts');
+    sheet.appendRow([
+      new Date(),
+      postData.name,
+      "'" + postData.phone,
+      postData.email,
+      postData.service,
+      postData.area,
+      postData.address,
+      postData.note
+    ]);
+    return ContentService.createTextOutput("SUCCESS");
+  }
+
+  // 3. LƯU CÔNG TRÌNH (GALLERY_SAVE)
+  if (type === 'gallery_save') {
+    var sheet = ss.getSheetByName('gallery') || ss.insertSheet('gallery');
+    var data = sheet.getDataRange().getValues();
+    var id = postData.id;
+    var rowIdx = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] == id) { rowIdx = i + 1; break; }
+    }
+    var rowData = [id, postData.title, postData.category, postData.location, postData.size, postData.image];
+    if (rowIdx > 0) {
+      sheet.getRange(rowIdx, 1, 1, 6).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+    return ContentService.createTextOutput("SUCCESS");
+  }
+
+  // 4. XÓA CÔNG TRÌNH (GALLERY_DELETE)
+  if (type === 'gallery_delete') {
+    var sheet = ss.getSheetByName('gallery') || ss.insertSheet('gallery');
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] == postData.id) {
+        sheet.deleteRow(i + 1);
+        break;
+      }
+    }
+    return ContentService.createTextOutput("SUCCESS");
+  }
+
+  // 5. LƯU NỘI DUNG TEXT CHỈNH SỬA (CONTENT_SAVE)
+  if (type === 'content_save') {
+    var sheet = ss.getSheetByName('content') || ss.insertSheet('content');
+    sheet.clearContents();
+    sheet.appendRow(['key', 'value']);
+    var list = postData.content;
+    for (var i = 0; i < list.length; i++) {
+      sheet.appendRow([list[i].key, list[i].value]);
+    }
+    return ContentService.createTextOutput("SUCCESS");
+  }
+
+  // 6. LƯU ĐÁNH GIÁ KHÁCH HÀNG (REVIEW_SAVE)
+  if (type === 'review_save') {
+    var sheet = ss.getSheetByName('reviews') || ss.insertSheet('reviews');
+    var data = sheet.getDataRange().getValues();
+    var id = postData.id;
+    var rowIdx = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] == id) { rowIdx = i + 1; break; }
+    }
+    var rowData = [id, postData.name, postData.role, postData.text, postData.proj, postData.stars];
+    if (rowIdx > 0) {
+      sheet.getRange(rowIdx, 1, 1, 6).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+    return ContentService.createTextOutput("SUCCESS");
+  }
+
+  // 7. XÓA ĐÁNH GIÁ KHÁCH HÀNG (REVIEW_DELETE)
+  if (type === 'review_delete') {
+    var sheet = ss.getSheetByName('reviews') || ss.insertSheet('reviews');
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] == postData.id) {
+        sheet.deleteRow(i + 1);
+        break;
+      }
+    }
+    return ContentService.createTextOutput("SUCCESS");
+  }
+}
+
+function resJSON(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+                       .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+---
+
+### MỤC 2: FILE `src/LandingPage.css` (CẬP NHẬT ẢNH NỀN HEADER SANG TRỌNG)
+*Bạn hãy dán đè toàn bộ nội dung dưới đây vào file `src/LandingPage.css` để thêm hiển thị ảnh nền Header mờ ẩn cao cấp và mượt mà:*
+
+```css
+/* src/LandingPage.css */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --c0:#0A0B0D;--c1:#111318;--c2:#1C1F28;--c3:#262A36;
+  --accent:#E8A020;--accent2:#F5C842;
+  --text:#F0EDE6;--muted:#8A8680;--line:rgba(232,160,32,.15);--r:4px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--c0);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-weight:300;overflow-x:hidden}
+#cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .3s,height .3s}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(232,160,32,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,opacity .3s}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--c1)}::-webkit-scrollbar-thumb{background:var(--accent)}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:800;padding:1.25rem 5%;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
+#nav.scrolled{background:rgba(10,11,13,.92);backdrop-filter:blur(16px);padding:.9rem 5%;border-bottom:1px solid var(--line)}
+.logo-wrap{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.logo-text{font-family:'Be Vietnam Pro',sans-serif;font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-.02em}
+.logo-text span{color:var(--accent)}
+.nav-center{display:flex;gap:2.2rem;list-style:none}
+.nav-center a{color:var(--muted);text-decoration:none;font-size:.82rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;transition:color .25s;position:relative}
+.nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--accent);transition:width .3s}
+.nav-center a:hover{color:var(--text)}
+.nav-center a:hover::after{width:100%}
+.nav-right{display:flex;align-items:center;gap:1rem}
+.nav-phone{color:var(--accent);font-weight:600;font-size:.88rem;text-decoration:none}
+.btn-nav{background:var(--accent);color:var(--c0);border:none;padding:.6rem 1.5rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;cursor:none;text-transform:uppercase;transition:background .25s,transform .2s;text-decoration:none;display:inline-block}
+.btn-nav:hover{background:var(--accent2);transform:translateY(-1px)}
+
+/* HERO (Cập nhật hiển thị ảnh nền Header mờ ẩn cao cấp) */
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;padding:0 5% 5rem;background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-image 0.5s ease-in-out}
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,11,13,0.85) 0%, rgba(10,11,13,0.95) 100%);z-index:1}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(232,160,32,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(232,160,32,.04) 1px,transparent 1px);background-size:60px 60px;animation:gridPulse 8s ease-in-out infinite;z-index:2}
+@keyframes gridPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.hero-orb{position:absolute;top:-20%;right:-10%;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(232,160,32,.18) 0%,rgba(232,160,32,.04) 50%,transparent 70%);filter:blur(40px);animation:orbF 12s ease-in-out infinite;z-index:2}
+@keyframes orbF{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,15px)}}
+.hero-orb2{position:absolute;bottom:-10%;left:5%;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(232,160,32,.07) 0%,transparent 70%);filter:blur(60px);animation:orbF 16s ease-in-out infinite reverse;z-index:2}
+.hero-bignum{position:absolute;bottom:-2rem;right:3%;font-family:'Playfair Display',serif;font-size:clamp(12rem,22vw,22rem);color:rgba(232,160,32,.035);line-height:1;pointer-events:none;user-select:none;z-index:2}
+.hero-content{position:relative;z-index:3;display:grid;grid-template-columns:1fr auto;gap:4rem;align-items:flex-end}
+.hero-tag{display:inline-flex;align-items:center;gap:.6rem;background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.25);color:var(--accent);padding:.4rem 1rem;border-radius:999px;font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2rem;animation:fadeUp .8s .2s both}
+.dot{width:6px;height:6px;background:var(--accent);border-radius:50%;display:inline-block;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+h1.hero-title{font-family:'Playfair Display',serif;font-size:clamp(3.2rem,6vw,6.5rem);line-height:1.0;color:var(--text);margin-bottom:1.8rem;animation:fadeUp .8s .4s both}
+h1.hero-title em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.8;max-width:46ch;margin-bottom:2.5rem;animation:fadeUp .8s .6s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hero-btns{display:flex;gap:1rem;animation:fadeUp .8s .8s both;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:var(--c0);border:none;padding:1rem 2.4rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.05em;text-transform:uppercase;cursor:none;text-decoration:none;transition:background .25s,transform .2s,box-shadow .25s;display:inline-block}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(232,160,32,.3)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid rgba(240,237,230,.15);padding:1rem 2.4rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:600;font-size:.9rem;text-transform:uppercase;cursor:none;text-decoration:none;transition:border-color .25s;display:inline-block}
+.btn-ghost:hover{border-color:rgba(240,237,230,.4)}
+.hero-right{display:flex;flex-direction:column;gap:1.5rem;animation:fadeUp .8s 1s both}
+.stat-box{background:var(--c2);border:1px solid var(--line);border-radius:8px;padding:1.4rem 2rem;text-align:right;min-width:160px;transition:border-color .3s,transform .3s}
+.stat-box:hover{border-color:rgba(232,160,32,.4);transform:translateX(-4px)}
+.stat-num{font-family:'Playfair Display',serif;font-size:2.8rem;color:var(--accent);line-height:1}
+.stat-lbl{font-size:.75rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:.3rem}
+.scroll-ind{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;z-index:2;animation:fadeUp .8s 1.4s both}
+.scroll-ind span{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.scroll-line{width:1px;height:48px;background:linear-gradient(to bottom,var(--accent),transparent);animation:sLine 2s ease-in-out infinite}
+@keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* TICKER */
+.ticker{background:var(--accent);overflow:hidden;padding:.7rem 0}
+.ticker-track{display:flex;gap:3.5rem;animation:tick 30s linear infinite;flex-shrink:0;white-space:nowrap}
+.ticker-inner{display:flex}
+.ticker-item{display:inline-flex;align-items:center;gap:1rem;font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--c0);flex-shrink:0}
+.ticker-sep{color:rgba(10,11,13,.3);font-size:1.2rem}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* SECTION */
+section{padding:7rem 5%}
+.sec-eyebrow{display:inline-flex;align-items:center;gap:.7rem;font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.sec-eyebrow::before{content:'';width:24px;height:2px;background:var(--accent)}
+h2.sec-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,4vw,3.8rem);line-height:1.1;color:var(--text);margin-bottom:1rem}
+.sec-desc{font-size:1rem;color:var(--muted);line-height:1.85;max-width:52ch}
+
+/* SERVICES */
+#services{background:var(--c1);position:relative;overflow:hidden}
+#services::before{content:'SVC';position:absolute;top:50%;left:-1%;transform:translateY(-50%);font-family:'Playfair Display',serif;font-size:18rem;color:rgba(255,255,255,.012);pointer-events:none;line-height:1}
+.services-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4rem;flex-wrap:wrap;gap:2rem}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+.svc-card{background:var(--c1);padding:2.8rem 2.4rem;position:relative;overflow:hidden;transition:background .4s}
+.svc-card:hover{background:var(--c2)}
+.svc-card::after{content:'';position:absolute;left:0;bottom:0;width:100%;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.svc-card:hover::after{transform:scaleX(1)}
+.svc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem}
+.svc-ico{width:52px;height:52px;background:rgba(232,160,32,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:background .3s,transform .3s}
+.svc-card:hover .svc-ico{background:rgba(232,160,32,.2);transform:scale(1.08)}
+.svc-n{font-family:'Be Vietnam Pro',sans-serif;font-size:3rem;font-weight:800;color:rgba(232,160,32,.07);line-height:1}
+.svc-name{font-family:'Be Vietnam Pro',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:.8rem}
+.svc-desc{font-size:.87rem;color:var(--muted);line-height:1.75}
+.svc-price{margin-top:1.5rem;display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.05em}
+.svc-arrow{transition:transform .3s}.svc-card:hover .svc-arrow{transform:translateX(4px)}
+
+/* ABOUT */
+#about{background:var(--c0);display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:520px;padding:0}
+.about-visual{background:var(--c2);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2rem;padding:5rem}
+.about-ring-outer{width:240px;height:240px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;animation:spin 20s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.about-ring-inner{animation:spin 20s linear infinite reverse;background:var(--c2);width:180px;height:180px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line)}
+.arc-num{font-family:'Playfair Display',serif;font-size:3.5rem;color:var(--accent);line-height:1}
+.arc-lbl{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center}
+.about-badges{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center}
+.badge{background:var(--c3);border:1px solid var(--line);border-radius:999px;padding:.4rem 1rem;font-size:.72rem;font-weight:600;color:var(--text);letter-spacing:.06em}
+.about-text{padding:6rem 5%}
+.feat-list{margin-top:3rem;display:flex;flex-direction:column}
+.feat{display:flex;align-items:flex-start;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid var(--line)}
+.feat:last-child{border:none}
+.feat-ico{width:44px;height:44px;flex-shrink:0;background:rgba(232,160,32,.08);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:background .3s}
+.feat:hover .feat-ico{background:rgba(232,160,32,.18)}
+.feat-title{font-family:'Be Vietnam Pro',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.feat-desc{font-size:.85rem;color:var(--muted);line-height:1.7}
+
+/* GALLERY (Cập nhật lưới tự dãn và con trỏ) */
+#gallery{background:var(--c1);padding:5rem 5%}
+.gallery-filters{display:flex;gap:.5rem;margin-top:1.5rem;flex-wrap:wrap}
+.filter-btn{background:var(--c2);border:1px solid var(--line);color:var(--muted);padding:.45rem 1.1rem;border-radius:999px;font-size:.78rem;font-weight:600;cursor:none;transition:all .25s;letter-spacing:.05em}
+.filter-btn.active,.filter-btn:hover{background:var(--accent);border-color:var(--accent);color:var(--c0)}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:220px;gap:1px;background:var(--line);margin-top:3rem}
+.g-item{background:var(--c2);position:relative;overflow:hidden;cursor:none}
+.g-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:6rem;transition:transform .6s ease}
+.g-item:hover .g-bg{transform:scale(1.1)}
+.g-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,11,13,.92) 0%,rgba(10,11,13,.3) 50%,transparent);opacity:0;transition:opacity .35s}
+.g-item:hover .g-overlay{opacity:1}
+.g-info{position:absolute;bottom:1.2rem;left:1.4rem;right:1.4rem;transform:translateY(8px);opacity:0;transition:all .35s}
+.g-item:hover .g-info{transform:translateY(0);opacity:1}
+.g-cat{font-size:.68rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.3rem;font-weight:700}
+.g-title{font-family:'Be Vietnam Pro',sans-serif;font-size:1rem;font-weight:700;color:var(--text)}
+.g-area{font-size:.78rem;color:var(--muted)}
+
+/* LIGHTBOX POPUP ALBUM (Mới bổ sung cho nhiều ảnh) */
+.lightbox-bg{position:fixed;inset:0;background:rgba(10,11,13,.96);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.lightbox-modal{background:var(--c2);border:1px solid var(--line);border-radius:12px;width:92%;max-width:1000px;overflow:hidden;position:relative;display:grid;grid-template-columns:1.6fr 1fr;height:82vh}
+.lightbox-main{position:relative;background:#050608;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.lightbox-img{max-width:100%;max-height:100%;object-fit:contain}
+.lightbox-side{padding:2.5rem;display:flex;flex-direction:column;justify-content:space-between;border-left:1px solid var(--line);overflow-y:auto}
+.lightbox-meta{margin-bottom:1.5rem}
+.lightbox-cat{font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem}
+.lightbox-title{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--text);margin-bottom:1rem;line-height:1.2}
+.lightbox-desc{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:1.5rem}
+.lightbox-close{position:absolute;top:1rem;right:1rem;background:var(--c3);border:1px solid var(--line);color:var(--muted);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;z-index:10}
+.lightbox-close:hover{border-color:var(--red);color:var(--red)}
+.lightbox-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(28,31,40,.8);border:1px solid var(--line);color:var(--text);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all .25s;z-index:5}
+.lightbox-arrow:hover{background:var(--accent);color:var(--c0)}
+.lightbox-arrow-left{left:1rem}
+.lightbox-arrow-right{right:1rem}
+.lightbox-thumbs{display:flex;gap:.5rem;overflow-x:auto;padding:.5rem 0;margin-top:1.5rem;border-top:1px solid var(--line)}
+.lightbox-thumb{width:60px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all .25s;flex-shrink:0}
+.lightbox-thumb.active{border-color:var(--accent)}
+
+/* CALCULATOR */
+#calc{background:var(--c0);position:relative;overflow:hidden}
+#calc::before{content:'';position:absolute;top:0;right:0;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(232,160,32,.05) 0%,transparent 70%);pointer-events:none}
+.calc-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:5rem;align-items:start}
+.calc-form{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:2.5rem}
+.calc-title-bar{font-family:'Be Vietnam Pro',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:2rem;display:flex;align-items:center;gap:.7rem}
+.calc-title-bar::before{content:'';width:4px;height:20px;background:var(--accent);border-radius:2px}
+.form-row{margin-bottom:1.5rem}
+.form-label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem}
+.form-select,.form-input{width:100%;background:var(--c3);border:1px solid var(--line);color:var(--text);padding:.8rem 1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-size:.92rem;cursor:none;transition:border-color .25s;appearance:none}
+.form-select:focus,.form-input:focus{outline:none;border-color:var(--accent)}
+.form-select option{background:var(--c3)}
+.range-wrap{display:flex;flex-direction:column;gap:.6rem}
+.range-val{display:flex;justify-content:space-between;font-size:.85rem}
+.range-val span:last-child{color:var(--accent);font-weight:700;font-family:'Be Vietnam Pro',sans-serif}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--c3);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:none;border:2px solid var(--c0)}
+.calc-btn{width:100%;background:var(--accent);color:var(--c0);border:none;padding:1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;cursor:none;transition:background .25s}
+.calc-btn:hover{background:var(--accent2)}
+.calc-result{position:sticky;top:7rem}
+.result-box{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:2.5rem;margin-bottom:1.5rem;transition:border-color .4s}
+.result-box.active{border-color:rgba(232,160,32,.4)}
+.result-label{font-size:.75rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem}
+.result-price{font-family:'Playfair Display',serif;font-size:3rem;color:var(--accent);line-height:1}
+.result-unit{font-size:.85rem;color:var(--muted);margin-top:.3rem}
+.result-bd{margin-top:1.5rem;display:flex;flex-direction:column;gap:.8rem}
+.rb-item{display:flex;justify-content:space-between;align-items:center;font-size:.85rem}
+.rb-label{color:var(--muted)}.rb-val{color:var(--text);font-weight:600;font-family:'Be Vietnam Pro',sans-serif}
+.rb-div{height:1px;background:var(--line);margin:.3rem 0}
+.rb-total .rb-label{color:var(--text);font-weight:700}
+.rb-total .rb-val{color:var(--accent);font-size:1.1rem}
+.calc-note{background:rgba(232,160,32,.06);border:1px solid rgba(232,160,32,.15);border-radius:8px;padding:1.2rem 1.5rem;font-size:.82rem;color:var(--muted);line-height:1.7}
+.calc-note strong{color:var(--accent)}
+
+/* MATERIALS */
+#materials{background:var(--c1)}
+.mat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);margin-top:4rem}
+.mat-card{background:var(--c1);padding:2.2rem 1.8rem;position:relative;overflow:hidden;border-bottom:2px solid transparent;transition:all .35s}
+.mat-card:hover{background:var(--c2);border-bottom-color:var(--accent)}
+.mat-brand{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:.8rem}
+.mat-name{font-family:'Be Vietnam Pro',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:.6rem}
+.mat-desc{font-size:.83rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem}
+.mat-tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.mat-tag{background:rgba(232,160,32,.08);border:1px solid rgba(232,160,32,.15);color:var(--accent);padding:.2rem .7rem;border-radius:999px;font-size:.68rem;font-weight:600}
+.mat-ico-big{position:absolute;bottom:-1rem;right:-1rem;font-size:5rem;opacity:.06;transition:opacity .35s}
+.mat-card:hover .mat-ico-big{opacity:.12}
+
+/* PROCESS */
+#process{background:var(--c0)}
+.process-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:5rem;position:relative}
+.process-grid::before{content:'';position:absolute;top:2.5rem;left:calc(10% + 1.5rem);right:calc(10% + 1.5rem);height:1px;background:linear-gradient(to right,transparent,var(--line) 20%,var(--line) 80%,transparent)}
+.proc-step{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 1rem}
+.proc-num{width:48px;height:48px;border-radius:50%;background:var(--c2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);margin:0 auto 1.5rem;position:relative;z-index:1;transition:all .35s}
+.proc-step:hover .proc-num{background:var(--accent);border-color:var(--accent);color:var(--c0);transform:scale(1.15)}
+.proc-ico{font-size:1.5rem;margin-bottom:.8rem}
+.proc-name{font-family:'Be Vietnam Pro',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.proc-desc{font-size:.78rem;color:var(--muted);line-height:1.65}
+
+/* REVIEWS */
+#reviews{background:var(--c1)}
+.reviews-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3.5rem;flex-wrap:wrap;gap:1.5rem}
+.rating-big{display:flex;align-items:center;gap:1rem}
+.rating-num{font-family:'Playfair Display',serif;font-size:4rem;color:var(--accent);line-height:1}
+.r-stars{display:flex;flex-direction:column;gap:.3rem}
+.stars{color:var(--accent);font-size:1rem;letter-spacing:.08rem}
+.rating-sub{font-size:.75rem;color:var(--muted)}
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.review-card{background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:2.2rem;position:relative;overflow:hidden;transition:border-color .35s,transform .35s}
+.review-card:hover{border-color:rgba(232,160,32,.3);transform:translateY(-4px)}
+.review-q{position:absolute;top:1.2rem;right:1.8rem;font-family:'Playfair Display',serif;font-size:4rem;color:rgba(232,160,32,.1);line-height:1}
+.review-stars{font-size:.85rem;color:var(--accent);margin-bottom:1.2rem}
+.review-text{font-size:.88rem;color:var(--muted);line-height:1.8;margin-bottom:1.8rem;position:relative;z-index:1}
+.review-author{display:flex;align-items:center;gap:.9rem}
+.review-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8B6520);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:var(--c0);flex-shrink:0}
+.review-name{font-size:.88rem;font-weight:700;color:var(--text)}
+.review-role{font-size:.75rem;color:var(--muted)}
+.review-proj{font-size:.7rem;color:var(--accent);font-weight:600;letter-spacing:.06em;margin-top:.2rem}
+
+/* WHY */
+#why{background:var(--c0);padding:7rem 5%}
+.why-wrap{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:center}
+.why-visual{position:relative}
+.why-card-main{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:3rem;aspect-ratio:4/3;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+.why-card-main::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(232,160,32,.08) 0%,transparent 65%)}
+.why-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(232,160,32,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,160,32,.03) 1px,transparent 1px);background-size:30px 30px}
+.why-tag{font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;position:relative;z-index:1}
+.why-big{font-family:'Playfair Display',serif;font-size:3.5rem;color:var(--text);line-height:1.05;position:relative;z-index:1}
+.why-float{position:absolute;top:-1.5rem;right:-2rem;background:var(--accent);color:var(--c0);border-radius:10px;padding:1.2rem 1.6rem;font-family:'Be Vietnam Pro',sans-serif;font-weight:800}
+.why-float-num{font-size:2.2rem;line-height:1}
+.why-float-lbl{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.why-list{display:flex;flex-direction:column}
+.why-item{display:flex;align-items:flex-start;gap:1.3rem;padding:1.6rem 0;border-bottom:1px solid var(--line)}
+.why-item:last-child{border:none}
+.why-check{width:32px;height:32px;flex-shrink:0;background:rgba(232,160,32,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1rem;transition:background .3s}
+.why-item:hover .why-check{background:rgba(232,160,32,.22)}
+.why-item-title{font-family:'Be Vietnam Pro',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.why-item-desc{font-size:.84rem;color:var(--muted);line-height:1.7}
+
+/* CTA */
+#cta{background:var(--accent);padding:6rem 5%;position:relative;overflow:hidden}
+#cta::before{content:'';position:absolute;top:-50%;right:-5%;width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
+.cta-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:4rem;align-items:center}
+.cta-text h2{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.5rem);color:var(--c0);line-height:1.1;margin-bottom:1rem}
+.cta-text p{font-size:1rem;color:rgba(10,11,13,.65);line-height:1.7;max-width:52ch}
+.cta-actions{display:flex;flex-direction:column;gap:1rem;align-items:center;flex-shrink:0}
+.btn-cta-dark{background:var(--c0);color:var(--text);border:none;padding:1.1rem 2.5rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:.92rem;text-transform:uppercase;letter-spacing:.06em;cursor:none;text-decoration:none;display:inline-block;transition:transform .2s;white-space:nowrap}
+.btn-cta-dark:hover{transform:translateY(-2px)}
+.cta-phone-big{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--c0);text-align:center}
+.cta-time{font-size:.75rem;color:rgba(10,11,13,.55);letter-spacing:.1em;text-transform:uppercase;text-align:center}
+
+/* FOOTER */
+footer{background:var(--c0);border-top:1px solid var(--line);padding:5rem 5% 2.5rem}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:4rem;margin-bottom:4rem}
+.footer-brand .logo-wrap{margin-bottom:1.2rem}
+.footer-brand p{font-size:.84rem;color:var(--muted);line-height:1.8;max-width:30ch;margin-bottom:1.5rem}
+.social-row{display:flex;gap:.7rem}
+.social-btn{width:36px;height:36px;background:var(--c2);border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem;text-decoration:none;transition:all .25s;cursor:none}
+.social-btn:hover{background:var(--accent);border-color:var(--accent);color:var(--c0)}
+.footer-col h4{font-family:'Be Vietnam Pro',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:1.4rem}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:.8rem}
+.footer-col a{color:var(--muted);text-decoration:none;font-size:.85rem;transition:color .25s}
+.footer-col a:hover{color:var(--text)}
+.fci{display:flex;align-items:flex-start;gap:.7rem;font-size:.84rem;color:var(--muted);margin-bottom:.8rem}
+.fci-ico{color:var(--accent);flex-shrink:0}
+.footer-bottom{border-top:1px solid var(--line);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-bottom p{font-size:.78rem;color:var(--muted)}
+.footer-bottom span{color:var(--accent)}
+.cert-row{display:flex;gap:.8rem}
+.cert-badge{background:var(--c2);border:1px solid var(--line);border-radius:4px;padding:.3rem .8rem;font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.05em}
+
+/* CONTACT FORM SECTION */
+#contact{background:var(--c1);padding:7rem 5%}
+.contact-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:5rem;align-items:start}
+.ci-item{display:flex;align-items:flex-start;gap:1.2rem;padding:1.4rem 0;border-bottom:1px solid var(--line)}
+.ci-item:last-of-type{border:none}
+.ci-icon{width:46px;height:46px;flex-shrink:0;background:rgba(232,160,32,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:background .3s}
+.ci-item:hover .ci-icon{background:rgba(232,160,32,.22)}
+.ci-label{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.25rem}
+.ci-val{font-size:.95rem;color:var(--text);font-weight:500}
+.ci-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.contact-form-box{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:2.8rem}
+.cf-title{font-family:'Be Vietnam Pro',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:2rem;display:flex;align-items:center;gap:.7rem}
+.cf-title::before{content:'';width:4px;height:20px;background:var(--accent);border-radius:2px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.cf-field{margin-bottom:1rem}
+.cf-label{display:block;font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem}
+.cf-input,.cf-select,.cf-textarea{width:100%;background:var(--c3);border:1px solid var(--line);color:var(--text);padding:.8rem 1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-size:.9rem;transition:border-color .25s;appearance:none}
+.cf-input:focus,.cf-select:focus,.cf-textarea:focus{outline:none;border-color:var(--accent)}
+.cf-select option{background:var(--c3)}
+.cf-textarea{resize:vertical;min-height:110px;line-height:1.6}
+.cf-submit{width:100%;background:var(--accent);color:var(--c0);border:none;padding:1rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;cursor:none;transition:background .25s,transform .2s;margin-top:.5rem}
+.cf-submit:hover{background:var(--accent2);transform:translateY(-1px)}
+.cf-success{display:none;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:1rem 1.5rem;color:#4ade80;font-size:.9rem;text-align:center;margin-top:1rem}
+.cf-success.show{display:block}
+/* MAP */
+#map-section{background:var(--c0);padding:0}
+.map-wrap{position:relative}
+.map-frame{width:100%;height:420px;border:none;filter:grayscale(1) invert(1) contrast(.85) brightness(.7) saturate(.6);display:block}
+.map-card{position:absolute;top:2.5rem;left:5%;background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:1.8rem 2.2rem;z-index:10;min-width:260px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.map-card-title{font-family:'Be Vietnam Pro',sans-serif;font-size:1rem;font-weight:800;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.map-card-title span{color:var(--accent)}
+.map-info-row{display:flex;align-items:flex-start;gap:.7rem;font-size:.83rem;color:var(--muted);margin-bottom:.7rem;line-height:1.5}
+.map-ico{color:var(--accent);flex-shrink:0}
+.map-cta-btn{display:block;width:100%;background:var(--accent);color:var(--c0);text-decoration:none;text-align:center;padding:.7rem;border-radius:var(--r);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;margin-top:1.2rem;transition:background .25s}
+.map-cta-btn:hover{background:var(--accent2)}
+@media(max-width:768px){
+  .mobile-menu-btn{display:flex}
+  .cf-row{grid-template-columns:1fr}
+  .contact-wrap{grid-template-columns:1fr}
+  .map-card{position:static;margin:0;border-radius:0}
+  .map-frame{height:300px}
+}
+```
+
+---
+
+### MỤC 3: FILE `src/components/LandingPage.jsx` (ĐỒNG BỘ ĐÁNH GIÁ ĐỘNG & ẢNH NỀN HEADER)
+*Bạn hãy dán đè toàn bộ nội dung dưới đây vào file `src/components/LandingPage.jsx`. Giao diện giữ nguyên bản gốc 100%, bổ sung ảnh nền mờ ảo cho Header và tự động đọc dữ liệu Đánh Giá động:*
+
+```jsx
+// src/components/LandingPage.jsx
+import React, { useState, useEffect } from 'react';
+import '../LandingPage.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbzMuam393Ao4cePF-TJdnUfFKUnFZ7F8e-uz5EK1BZ65oUtlHRgrra1rtbN32ukX6yv/exec';
+
+const CAT_EMOJI = {
+  'Căn Hộ': '🏙️', 'Văn Phòng': '🏢', 'Biệt Thự': '🏠',
+  'Khách Sạn': '🏨', 'Thương Mại': '🏪', 'Nhà Phố': '🏘️', 'Khác': '🏗️'
+};
+
+const FALLBACK_BG = [
+  'linear-gradient(135deg,#1a2035,#0d1520)',
+  'linear-gradient(135deg,#201a10,#150f05)',
+  'linear-gradient(135deg,#0d2020,#051510)',
+  'linear-gradient(135deg,#201018,#150810)',
+  'linear-gradient(135deg,#1a1520,#0d0a15)',
+  'linear-gradient(135deg,#1c1a10,#100e05)',
+  'linear-gradient(135deg,#0d1a20,#050f15)'
+];
+
+export default function LandingPage({ onNavigateToAdmin }) {
+  const [allItems, setAllItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [currentCat, setCurrentCat] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState({});
+  const [reviews, setReviews] = useState([]);
+
+  // Album Lightbox State
+  const [activeProject, setActiveProject] = useState(null);
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+
+  // Form states
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', service: '', area: '', address: '', note: '' });
+
+  // Calculator states
+  const [calcParams, setCalcParams] = useState({ svc: 95000, area: 50, mat: 1.0, build: 1.0 });
+  const [calcActive, setCalcActive] = useState(false);
+
+  // Hiệu ứng chuột Custom Cursor
+  useEffect(() => {
+    const cur = document.getElementById('cursor');
+    const ring = document.getElementById('cursor-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    const handleMouseMove = (e) => {
+      mx = e.clientX;
+      my = e.clientY;
+      if (cur) {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+      }
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+
+    let frameId;
+    const anim = () => {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      if (ring) {
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+      }
+      frameId = requestAnimationFrame(anim);
+    };
+    anim();
+
+    const handleMouseEnter = () => {
+      if (cur && ring) {
+        cur.style.width = '16px'; cur.style.height = '16px';
+        ring.style.width = '50px'; ring.style.height = '50px';
+      }
+    };
+    const handleMouseLeave = () => {
+      if (cur && ring) {
+        cur.style.width = '10px'; cur.style.height = '10px';
+        ring.style.width = '36px'; ring.style.height = '36px';
+      }
+    };
+
+    const interactives = document.querySelectorAll('a, button, select, input, textarea, .filter-btn, .g-item, .lightbox-arrow, .lightbox-thumb, .lightbox-close');
+    interactives.forEach(el => {
+      el.addEventListener('mouseenter', handleMouseEnter);
+      el.addEventListener('mouseleave', handleMouseLeave);
+    });
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(frameId);
+      interactives.forEach(el => {
+        el.removeEventListener('mouseenter', handleMouseEnter);
+        el.removeEventListener('mouseleave', handleMouseLeave);
+      });
+    };
+  }, [loading, activeProject]);
+
+  // Hiệu ứng Nav Scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const nav = document.getElementById('nav');
+      if (nav) nav.classList.toggle('scrolled', window.scrollY > 60);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Hiệu ứng Scroll Reveal (.rv)
+  useEffect(() => {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('in'), i * 50);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.rv, .rv-l, .rv-r').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, [loading]);
+
+  // Hiệu ứng chạy Counter Số
+  useEffect(() => {
+    const animC = (el) => {
+      const t = +el.dataset.count;
+      const suf = el.textContent.slice(-1);
+      let n = 0, step = t / 60;
+      const iv = setInterval(() => {
+        n += step;
+        if (n >= t) { n = t; clearInterval(iv); }
+        el.textContent = Math.floor(n) + (isNaN(suf) ? suf : '');
+      }, 20);
+    };
+    const cObs = new IntersectionObserver(e => e.forEach(e => {
+      if (e.isIntersecting) { animC(e.target); cObs.unobserve(e.target); }
+    }), { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(el => cObs.observe(el));
+    return () => cObs.disconnect();
+  }, [loading]);
+
+  // Load Gallery, Content và Reviews động
+  useEffect(() => {
+    const loadAll = async () => {
+      try {
+        const [galRes, cntRes, revRes] = await Promise.all([
+          fetch(`${API_URL}?t=${Date.now()}`).then(r => r.json()),
+          fetch(`${API_URL}?type=content&t=${Date.now()}`).then(r => r.json()),
+          fetch(`${API_URL}?type=reviews&t=${Date.now()}`).then(r => r.json())
+        ]);
+        setAllItems(galRes.items || []);
+        setFilteredItems(galRes.items || []);
+        setReviews(revRes.reviews || []);
+        setLoading(false);
+
+        if (cntRes.content) {
+          const mapped = {};
+          cntRes.content.forEach(({ key, value }) => { mapped[key] = value; });
+          setContent(mapped);
+        }
+      } catch (e) {
+        setLoading(false);
+      }
+    };
+    loadAll();
+  }, []);
+
+  const filterG = (cat) => {
+    setCurrentCat(cat);
+    if (cat === 'all') {
+      setFilteredItems(allItems);
+    } else {
+      setFilteredItems(allItems.filter(i => i.category === cat));
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name) { alert('Vui lòng nhập họ tên!'); return; }
+    if (!formData.phone) { alert('Vui lòng nhập số điện thoại!'); return; }
+
+    const btn = document.querySelector('.cf-submit');
+    btn.textContent = '⏳ Đang gửi...';
+    btn.disabled = true;
+
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'contact', ...formData })
+      });
+      btn.textContent = '✅ Đã gửi thành công!';
+      btn.style.background = '#22c55e';
+      document.getElementById('cf-success').classList.add('show');
+      setTimeout(() => {
+        btn.textContent = '📩 Gửi Yêu Cầu Báo Giá';
+        btn.style.background = '';
+        btn.disabled = false;
+        document.getElementById('cf-success').classList.remove('show');
+        setFormData({ name: '', phone: '', email: '', service: '', area: '', address: '', note: '' });
+      }, 4000);
+    } catch (err) {
+      btn.textContent = '❌ Gửi thất bại — thử lại!';
+      btn.style.background = '#ef4444';
+      btn.disabled = false;
+    }
+  };
+
+  const calcTotal = Math.round(calcParams.svc * calcParams.area * calcParams.mat * calcParams.build);
+
+  // Xử lý click mở popup album ảnh
+  const handleOpenLightbox = (item) => {
+    const parsedImages = item.image ? item.image.split(/[\s,\n\t]+/).filter(url => url.trim() !== '') : [];
+    setActiveProject({ ...item, imageList: parsedImages });
+    setActiveImgIndex(0);
+  };
+
+  const handlePrevImg = (e) => {
+    e.stopPropagation();
+    if (!activeProject || activeProject.imageList.length <= 1) return;
+    setActiveImgIndex(prev => prev === 0 ? activeProject.imageList.length - 1 : prev - 1);
+  };
+
+  const handleNextImg = (e) => {
+    e.stopPropagation();
+    if (!activeProject || activeProject.imageList.length <= 1) return;
+    setActiveImgIndex(prev => prev === activeProject.imageList.length - 1 : prev + 1);
+  };
+
+  return (
+    <div>
+      <div id="cursor"></div>
+      <div id="cursor-ring"></div>
+
+      {/* NAV */}
+      <nav id="nav">
+        <a href="#" className="logo-wrap">
+          <div className="logo-icon">🏠</div>
+          <span className="logo-text">{content.brand_name || 'ThạchPro'}</span>
+        </a>
+        <ul className="nav-center">
+          <li><a href="#services">Dịch Vụ</a></li>
+          <li><a href="#gallery">Công Trình</a></li>
+          <li><a href="#calc">Báo Giá</a></li>
+          <li><a href="#materials">Vật Liệu</a></li>
+          <li><a href="#reviews">Đánh Giá</a></li>
+          <li><a href="#contact">Liên Hệ</a></li>
+        </ul>
+        <div className="nav-right">
+          <a href={`tel:${content.contact_phone || '0901234567'}`} className="nav-phone">
+            📞 {content.contact_phone || '0901 234 567'}
+          </a>
+          <button onClick={onNavigateToAdmin} className="btn-nav" style={{ marginRight: '10px' }}>Admin</button>
+          <a href="#cta" className="btn-nav">Liên Hệ Ngay</a>
+          <button className="mobile-menu-btn" onClick={() => document.getElementById('mobile-menu').classList.add('open')}>☰</button>
+        </div>
+      </nav>
+
+      {/* MOBILE MENU */}
+      <div id="mobile-menu">
+        <button className="mobile-close" onClick={() => document.getElementById('mobile-menu').classList.remove('open')}>✕</button>
+        <a href="#services" onClick={() => document.getElementById('mobile-menu').classList.remove('open')}>Dịch Vụ</a>
+        <a href="#gallery" onClick={() => document.getElementById('mobile-menu').classList.remove('open')}>Công Trình</a>
+        <a href="#calc" onClick={() => document.getElementById('mobile-menu').classList.remove('open')}>Báo Giá</a>
+        <a href="#materials" onClick={() => document.getElementById('mobile-menu').classList.remove('open')}>Vật Liệu</a>
+        <a href="#contact" onClick={() => document.getElementById('mobile-menu').classList.remove('open')}>Liên Hệ</a>
+      </div>
+
+      {/* HERO (Ảnh Header mờ ảo sang trọng) */}
+      <section className="hero" style={content.hero_bg ? { backgroundImage: `url('${encodeURI(content.hero_bg)}')` } : {}}>
+        <div className="hero-grid"></div>
+        <div className="hero-orb"></div>
+        <div className="hero-orb2"></div>
+        <div className="hero-bignum" data-key="hero_bignum">{content.hero_bignum || '15'}</div>
+        <div className="hero-content">
+          <div className="hero-left">
+            <div className="hero-tag"><span className="dot"></span> <span dangerouslySetInnerHTML={{ __html: content.hero_tag || 'Đang nhận dự án — TP.HCM & Bình Dương' }}></span></div>
+            <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: content.hero_title || 'Kiến Tạo<br>Không Gian<br><em>Hoàn Hảo</em>' }}></h1>
+            <p className="hero-sub" dangerouslySetInnerHTML={{ __html: content.hero_sub || 'Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình.' }}></p>
+            <div className="hero-btns">
+              <a href="#calc" className="btn-primary" dangerouslySetInnerHTML={{ __html: content.hero_btn1 || '→ Nhận Báo Giá Miễn Phí' }}></a>
+              <a href="#gallery" className="btn-ghost" dangerouslySetInnerHTML={{ __html: content.hero_btn2 || 'Xem Công Trình →' }}></a>
+            </div>
+          </div>
+          <div className="hero-right">
+            <div className="stat-box">
+              <div className="stat-num" data-count={content.stat1_num || "500"}>0+</div>
+              <div className="stat-lbl">{content.stat1_lbl || 'Công trình hoàn thành'}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-num" data-count={content.stat2_num || "15"}>0+</div>
+              <div className="stat-lbl">{content.stat2_lbl || 'Năm kinh nghiệm'}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-num" data-count={content.stat3_num || "98"}>0%</div>
+              <div className="stat-lbl">{content.stat3_lbl || 'Khách hàng hài lòng'}</div>
+            </div>
+          </div>
+        </div>
+        <div className="scroll-ind"><span>Cuộn xuống</span><div className="scroll-line"></div></div>
+      </section>
+
+      {/* TICKER */}
+      <div className="ticker">
+        <div className="ticker-inner">
+          <div className="ticker-track">
+            {Array(2).fill([
+              'Trần Thạch Cao Phẳng', 'Trần Giật Cấp', 'Vách Ngăn Nhẹ', 'Phào Chỉ Trang Trí', 
+              'Knauf · USG · Vĩnh Tường', 'Khung Thép Mạ Kẽm', 'Bả Bột & Sơn Nước', 'Bảo Hành 24 Tháng'
+            ]).flat().map((item, idx) => (
+              <div key={idx} className="ticker-item">{item} <span className="ticker-sep">✦</span></div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SERVICES */}
+      <section id="services">
+        <div className="services-head">
+          <div>
+            <div className="sec-eyebrow rv">Dịch Vụ</div>
+            <h2 className="sec-title rv d1" dangerouslySetInnerHTML={{ __html: content.services_title || 'Thi Công Toàn Diện<br><em style="font-style:italic;color:var(--accent)">Đúng Chất Lượng</em>' }}></h2>
+          </div>
+          <p className="sec-desc rv d2">{content.services_desc || 'Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn.'}</p>
+        </div>
+        <div className="svc-grid rv">
+          {/* Card 1 */}
+          <div className="svc-card">
+            <div className="svc-top"><div className="svc-ico">🏛️</div><div className="svc-n">01</div></div>
+            <div className="svc-name">{content.svc1_title || 'Trần Thạch Cao Phẳng'}</div>
+            <div className="svc-desc">{content.svc1_desc || 'Thi công trần phẳng khung nổi & khung chìm. Bề mặt phẳng mịn tuyệt đối, che đường điện, điều hoà gọn gàng. Phù hợp căn hộ, văn phòng, nhà dân.'}</div>
+            <div className="svc-price">{content.svc1_price || 'Từ 95.000đ/m²'} <span className="svc-arrow">→</span></div>
+          </div>
+          {/* Card 2 */}
+          <div className="svc-card">
+            <div className="svc-top"><div className="svc-ico">✨</div><div className="svc-n">02</div></div>
+            <div className="svc-name">{content.svc2_title || 'Trần Giật Cấp Nghệ Thuật'}</div>
+            <div className="svc-desc">{content.svc2_desc || 'Thiết kế và thi công trần giật cấp 2–4 tầng, tích hợp hệ đèn LED âm trần, cắt chỉ nổi. Tạo chiều sâu không gian và điểm nhấn sang trọng.'}</div>
+            <div className="svc-price">{content.svc2_price || 'Từ 145.000đ/m²'} <span className="svc-arrow">→</span></div>
+          </div>
+          {/* Card 3 */}
+          <div className="svc-card">
+            <div className="svc-top"><div className="svc-ico">🪟</div><div className="svc-n">03</div></div>
+            <div className="svc-name">{content.svc3_title || 'Vách Ngăn Thạch Cao'}</div>
+            <div className="svc-desc">{content.svc3_desc || 'Vách ngăn khung thép mạ kẽm, tấm thạch cao tiêu chuẩn hoặc chống ẩm. Cách âm, cách nhiệt vượt trội. Linh hoạt bố cục không gian sống.'}</div>
+            <div className="svc-price">{content.svc3_price || 'Từ 180.000đ/m²'} <span className="svc-arrow">→</span></div>
+          </div>
+          {/* Card 4 */}
+          <div className="svc-card">
+            <div className="svc-top"><div className="svc-ico">🎨</div><div className="svc-n">04</div></div>
+            <div className="svc-name">{content.svc4_title || 'Phào Chỉ & Trang Trí'}</div>
+            <div className="svc-desc">{content.svc4_desc || 'Thi công phào chỉ thạch cao ốp tường, trần. Hoa văn cổ điển đến hiện đại, phào góc bo, gờ nổi. Hoàn thiện chi tiết tinh xảo.'}</div>
+            <div className="svc-price">{content.svc4_price || 'Từ 120.000đ/md'} <span className="svc-arrow">→</span></div>
+          </div>
+          {/* Card 5 */}
+          <div className="svc-card">
+            <div className="svc-top"><div className="svc-ico">🖌️</div><div className="svc-n">05</div></div>
+            <div className="svc-name">{content.svc5_title || 'Bả Bột & Sơn Nước'}</div>
+            <div className="svc-desc">{content.svc5_desc || 'Bả Matit 2–3 lớp, xử lý bề mặt trơn mịn hoàn hảo. Thi công sơn nước Dulux, Jotun, Kova nội ngoại thất. Màu sắc theo yêu cầu.'}</div>
+            <div className="svc-price">{content.svc5_price || 'Từ 55.000đ/m²'} <span className="svc-arrow">→</span></div>
+          </div>
+          {/* Card 6 */}
+          <div className="svc-card">
+            <div className="svc-top"><div className="svc-ico">🏗️</div><div className="svc-n">06</div></div>
+            <div className="svc-name">{content.svc6_title || 'Cung Cấp Vật Liệu'}</div>
+            <div className="svc-desc">{content.svc6_desc || 'Phân phối tấm thạch cao Knauf, USG, Vĩnh Tường; khung thép mạ kẽm; bông khoáng; phụ kiện. Giao tận công trình toàn TP.HCM, Bình Dương.'}</div>
+            <div className="svc-price">{content.svc6_price || 'Giá sỉ tốt nhất'} <span className="svc-arrow">→</span></div>
+          </div>
+        </div>
+      </section>
+
+      {/* ABOUT */}
+      <section id="about">
+        <div className="about-visual rv-l">
+          <div className="about-ring-outer">
+            <div className="about-ring-inner">
+              <div className="arc-num">{content.about_years || '15+'}</div>
+              <div className="arc-lbl">Năm<br />Kinh Nghiệm</div>
+            </div>
+          </div>
+          <div className="about-badges">
+            <div className="badge">Knauf Partner</div>
+            <div className="badge">ISO 9001</div>
+            <div className="badge">USG Authorized</div>
+            <div className="badge">Vĩnh Tường</div>
+          </div>
+        </div>
+        <div className="about-text rv-r">
+          <div className="sec-eyebrow">Về Chúng Tôi</div>
+          <h2 className="sec-title">{content.about_title || 'Hơn 15 Năm Xây Dựng Niềm Tin'}</h2>
+          <p className="sec-desc">{content.about_desc || 'ThạchPro được thành lập năm 2008, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.'}</p>
+          <div className="feat-list">
+            <div className="feat">
+              <div className="feat-ico">🏆</div>
+              <div>
+                <div className="feat-title">{content.about_feat1_title || 'Đội Ngũ Thợ Chuyên Nghiệp'}</div>
+                <div className="feat-desc">{content.about_feat1_desc || '30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG.'}</div>
+              </div>
+            </div>
+            <div className="feat">
+              <div className="feat-ico">📋</div>
+              <div>
+                <div className="feat-title">{content.about_feat2_title || 'Báo Giá Minh Bạch'}</div>
+                <div className="feat-desc">{content.about_feat2_desc || 'Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng hạng mục, vật tư rõ ràng ngay từ đầu.'}</div>
+              </div>
+            </div>
+            <div className="feat">
+              <div className="feat-ico">⚡</div>
+              <div>
+                <div className="feat-title">{content.about_feat3_title || 'Tiến Độ Đúng Cam Kết'}</div>
+                <div className="feat-desc">{content.about_feat3_desc || 'Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày, không gây ảnh hưởng đến sinh hoạt.'}</div>
+              </div>
+            </div>
+            <div className="feat">
+              <div className="feat-ico">🛡️</div>
+              <div>
+                <div className="feat-title">{content.about_feat4_title || 'Bảo Hành 24 Tháng'}</div>
+                <div className="feat-desc">{content.about_feat4_desc || 'Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì miễn phí sau thời gian bảo hành.'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* GALLERY (Đã nâng cấp lưới tự dãn dòng & click mở album) */}
+      <section id="gallery">
+        <div className="sec-eyebrow rv">Dự Án Tiêu Biểu</div>
+        <h2 className="sec-title rv d1">Công Trình Đã Thực Hiện</h2>
+        <div className="gallery-filters rv d2" id="gallery-filters">
+          {['all', 'Căn Hộ', 'Văn Phòng', 'Biệt Thự', 'Khách Sạn', 'Thương Mại'].map(cat => (
+            <button key={cat} className={`filter-btn ${currentCat === cat ? 'active' : ''}`} onClick={() => filterG(cat)}>
+              {cat === 'all' ? 'Tất Cả' : cat}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div id="gallery-loading" style={{ textAlign: 'center', padding: '4rem', color: 'var(--muted)', fontSize: '0.95rem' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</div><br />
+            Đang tải công trình...
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div id="gallery-empty" style={{ textAlign: 'center', padding: '4rem', color: 'var(--muted)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏗️</div>
+            <div style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--text)' }}>Chưa có công trình nào</div>
+            <div style={{ fontSize: '0.85rem' }}>Vào trang Admin để thêm công trình đầu tiên</div>
+          </div>
+        ) : (
+          <div className="gallery-grid rv d3" id="gallery-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: filteredItems.length === 1 ? '1fr' : filteredItems.length <= 3 ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)',
+            gridAutoRows: filteredItems.length <= 3 ? '280px' : '220px'
+          }}>
+            {filteredItems.map((item, i) => {
+              // Phân tách danh sách ảnh trong item (ngăn cách bởi dấu phẩy, dòng mới hoặc khoảng trắng)
+              const images = item.image ? item.image.split(/[\s,\n\t]+/).filter(url => url.trim() !== '') : [];
+              const hasImg = images.length > 0;
+              const mainImg = hasImg ? images[0] : '';
+              const emoji = CAT_EMOJI[item.category] || '🏗️';
+              const fallback = FALLBACK_BG[i % FALLBACK_BG.length];
+              const bgStyle = hasImg ? `url('${encodeURI(mainImg)}') center/cover no-repeat` : fallback;
+              const spanStyle = (i === 0 && filteredItems.length >= 4) ? { gridColumn: 'span 2', gridRow: 'span 2' } : (i === 3 && filteredItems.length >= 5) ? { gridColumn: 'span 2' } : {};
+              const idNum = item.id ? item.id.toString().replace('CT', '') : '';
+              const year = idNum && !isNaN(idNum) ? new Date(+idNum).getFullYear() : '';
+
+              return (
+                <div key={item.id} className="g-item" style={spanStyle} onClick={() => handleOpenLightbox(item)}>
+                  <div className="g-bg" style={{ background: bgStyle, fontSize: (i === 0 && filteredItems.length >= 4) ? '9rem' : '5rem' }}>
+                    {hasImg ? '' : emoji}
+                  </div>
+                  <div className="g-overlay"></div>
+                  <div className="g-info">
+                    <div className="g-cat">{item.category} {year ? `· ${year}` : ''} {images.length > 1 ? `(${images.length} ảnh)` : ''}</div>
+                    <div className="g-title">{item.title}</div>
+                    <div className="g-area">📍 {item.location || ''} {item.size ? `· ${item.size}` : ''}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ALBUM LIGHTBOX POPUP MODAL (Trình chiếu nhiều ảnh khi click) */}
+      {activeProject && (
+        <div className="lightbox-bg" onClick={() => setActiveProject(null)}>
+          <div className="lightbox-modal" onClick={e => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={() => setActiveProject(null)}>✕</button>
+            
+            <div className="lightbox-main">
+              {activeProject.imageList.length > 0 ? (
+                <img 
+                  className="lightbox-img" 
+                  src={activeProject.imageList[activeImgIndex]} 
+                  alt={activeProject.title} 
+                />
+              ) : (
+                <div style={{ fontSize: '5rem' }}>{CAT_EMOJI[activeProject.category] || '🏗️'}</div>
+              )}
+              
+              {activeProject.imageList.length > 1 && (
+                <>
+                  <button className="lightbox-arrow lightbox-arrow-left" onClick={handlePrevImg}>◀</button>
+                  <button className="lightbox-arrow lightbox-arrow-right" onClick={handleNextImg}>▶</button>
+                </>
+              )}
+            </div>
+
+            <div className="lightbox-side">
+              <div className="lightbox-meta">
+                <div className="lightbox-cat">{activeProject.category}</div>
+                <h3 className="lightbox-title">{activeProject.title}</h3>
+                <div className="lightbox-desc" style={{ fontSize: '0.82rem', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {activeProject.location && <span>📍 Địa điểm: {activeProject.location}</span>}
+                  {activeProject.size && <span>📐 Diện tích: {activeProject.size}</span>}
+                  {activeProject.imageList.length > 1 && (
+                    <span>🖼️ Ảnh {activeImgIndex + 1} / {activeProject.imageList.length}</span>
+                  )}
+                </div>
+              </div>
+
+              {activeProject.imageList.length > 1 && (
+                <div className="lightbox-thumbs">
+                  {activeProject.imageList.map((imgUrl, idx) => (
+                    <img 
+                      key={idx}
+                      className={`lightbox-thumb ${idx === activeImgIndex ? 'active' : ''}`}
+                      src={imgUrl}
+                      alt="Thumbnail"
+                      onClick={() => setActiveImgIndex(idx)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CALCULATOR */}
+      <section id="calc">
+        <div className="sec-eyebrow rv">Công Cụ</div>
+        <h2 className="sec-title rv d1">Tính Chi Phí <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>Ngay & Luôn</em></h2>
+        <p className="sec-desc rv d2" style={{ marginBottom: '4rem' }}>Nhập thông tin để nhận ước tính chi phí nhanh. Báo giá chính xác sau khi khảo sát thực tế miễn phí.</p>
+        <div className="calc-wrap rv">
+          <div className="calc-form">
+            <div className="calc-title-bar">Thông Tin Công Trình</div>
+            <div className="form-row">
+              <label className="form-label">Loại Dịch Vụ</label>
+              <select className="form-select" value={calcParams.svc} onChange={e => { setCalcParams({ ...calcParams, svc: +e.target.value }); setCalcActive(true); }}>
+                <option value="95000">Trần Thạch Cao Phẳng (từ 95.000đ/m²)</option>
+                <option value="145000">Trần Giật Cấp (từ 145.000đ/m²)</option>
+                <option value="180000">Vách Ngăn Thạch Cao (từ 180.000đ/m²)</option>
+                <option value="120000">Phào Chỉ Trang Trí (từ 120.000đ/md)</option>
+                <option value="55000">Bả Bột & Sơn Nước (từ 55.000đ/m²)</option>
+                <option value="0">Trọn Gói Nhiều Hạng Mục</option>
+              </select>
+            </div>
+            <div className="form-row">
+              <label className="form-label">Diện Tích (m²)</label>
+              <div className="range-wrap">
+                <div className="range-val"><span>Diện tích</span><span>{calcParams.area} m²</span></div>
+                <input type="range" min="10" max="1000" step="5" value={calcParams.area} onChange={e => { setCalcParams({ ...calcParams, area: +e.target.value }); setCalcActive(true); }} />
+              </div>
+            </div>
+            <div className="form-row">
+              <label className="form-label">Chất Lượng Vật Liệu</label>
+              <select className="form-select" value={calcParams.mat} onChange={e => { setCalcParams({ ...calcParams, mat: +e.target.value }); setCalcActive(true); }}>
+                <option value="1.0">Tiêu Chuẩn</option>
+                <option value="1.3">Cao Cấp (Knauf, USG)</option>
+                <option value="1.6">Premium (Chống Ẩm / Chống Cháy)</option>
+              </select>
+            </div>
+            <div className="form-row">
+              <label className="form-label">Loại Công Trình</label>
+              <select className="form-select" value={calcParams.build} onChange={e => { setCalcParams({ ...calcParams, build: +e.target.value }); setCalcActive(true); }}>
+                <option value="1.0">Căn Hộ / Nhà Phố</option>
+                <option value="1.1">Văn Phòng / Thương Mại</option>
+                <option value="1.2">Biệt Thự / Cao Cấp</option>
+                <option value="0.95">Nhà Xưởng / Kho Bãi</option>
+              </select>
+            </div>
+            <button className="calc-btn" onClick={() => setCalcActive(true)}>🔢 Tính Chi Phí Ngay</button>
+          </div>
+          <div className="calc-result">
+            <div className={`result-box ${calcActive ? 'active' : ''}`}>
+              <div className="result-label">Ước Tính Chi Phí Nhân Công</div>
+              <div className="result-price">{calcParams.svc === 0 ? 'Liên hệ báo giá' : `${calcTotal.toLocaleString('vi-VN')}đ`}</div>
+              <div className="result-unit">Chưa bao gồm VAT & vật liệu</div>
+              <div className="result-bd">
+                <div className="rb-item"><span className="rb-label">Diện tích</span><span className="rb-val">{calcParams.area} m²</span></div>
+                <div className="rb-item"><span className="rb-label">Đơn giá nhân công</span><span className="rb-val">{calcParams.svc === 0 ? 'Thoả thuận' : `${calcParams.svc.toLocaleString('vi-VN')}đ/m²`}</span></div>
+                <div className="rb-item"><span className="rb-label">Hệ số vật liệu</span><span className="rb-val">× {calcParams.mat}</span></div>
+                <div className="rb-item"><span className="rb-label">Hệ số công trình</span><span className="rb-val">× {calcParams.build}</span></div>
+                <div className="rb-div"></div>
+                <div className="rb-item rb-total"><span className="rb-label">Tổng ước tính</span><span className="rb-val">{calcParams.svc === 0 ? 'Liên hệ báo giá' : `${calcTotal.toLocaleString('vi-VN')}đ`}</span></div>
+              </div>
+            </div>
+            <div className="calc-note"><strong>⚠️ Lưu ý:</strong> Đây là ước tính tham khảo. Chi phí thực tế phụ thuộc vào hiện trạng công trình và độ phức tạp thiết kế. <strong>Liên hệ để được khảo sát và báo giá chính xác miễn phí.</strong></div>
+          </div>
+        </div>
+      </section>
+
+      {/* MATERIALS */}
+      <section id="materials">
+        <div className="sec-eyebrow rv">Vật Liệu</div>
+        <h2 className="sec-title rv d1">Nguồn Hàng Chính Hãng</h2>
+        <p className="sec-desc rv d2" style={{ marginBottom: '0' }}>Phân phối trực tiếp từ nhà sản xuất và nhập khẩu ủy quyền. Đảm bảo nguồn gốc rõ ràng, đầy đủ CO/CQ.</p>
+        <div className="mat-grid rv">
+          <div className="mat-card"><div className="mat-ico-big">🧱</div><div className="mat-brand">Knauf · USG · Vĩnh Tường</div><div className="mat-name">Tấm Thạch Cao Tiêu Chuẩn</div><div className="mat-desc">Tấm 9mm, 12mm, 15mm. Dùng cho trần phẳng, trần thả, vách ngăn thông thường.</div><div className="mat-tags"><span className="mat-tag">9.5mm</span><span className="mat-tag">12mm</span><span className="mat-tag">15mm</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">💧</div><div className="mat-brand">Knauf Aquapanel</div><div className="mat-name">Tấm Thạch Cao Chống Ẩm</div><div className="mat-desc">Lõi thạch cao phụ gia chống ẩm đặc biệt. Dùng cho phòng tắm, bếp, khu vực ẩm ướt.</div><div className="mat-tags"><span className="mat-tag">Chống Ẩm</span><span className="mat-tag">12mm</span><span className="mat-tag">Xanh Lá</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">🔥</div><div className="mat-brand">USG Sheetrock</div><div className="mat-name">Tấm Thạch Cao Chống Cháy</div><div className="mat-desc">Lõi chứa Micro Silica & sợi thủy tinh. Đạt tiêu chuẩn chống cháy PCCC quốc tế.</div><div className="mat-tags"><span className="mat-tag">Chống Cháy</span><span className="mat-tag">REI 60</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">🔩</div><div className="mat-brand">Vĩnh Tường · Gyproc</div><div className="mat-name">Khung Thép Mạ Kẽm</div><div className="mat-desc">Thanh C, U, V mạ kẽm nhúng nóng dày 0.45–0.55mm. Chống gỉ, bền 30 năm.</div><div className="mat-tags"><span className="mat-tag">Thanh C</span><span className="mat-tag">Thanh U</span><span className="mat-tag">Mạ Kẽm</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">🌡️</div><div className="mat-brand">Rockwool · Isover</div><div className="mat-name">Bông Khoáng Cách Nhiệt</div><div className="mat-desc">Bông khoáng mật độ cao. Cách nhiệt & cách âm vượt trội, không cháy lan.</div><div className="mat-tags"><span className="mat-tag">Cách Âm</span><span className="mat-tag">Cách Nhiệt</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">🎨</div><div className="mat-brand">Dulux · Jotun · Kova</div><div className="mat-name">Bột Bả & Sơn Nước</div><div className="mat-desc">Bột trét Matit, Sika. Sơn nội ngoại thất cao cấp. Đủ màu theo NCS, RAL, Pantone.</div><div className="mat-tags"><span className="mat-tag">Nội Thất</span><span className="mat-tag">Ngoại Thất</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">🔧</div><div className="mat-brand">Hilti · Fischer · Knauf</div><div className="mat-name">Phụ Kiện Thi Công</div><div className="mat-desc">Vít, băng lưới, hợp chất trám khe, kẹp trần, ty treo, nẹp góc inox chuyên dụng.</div><div className="mat-tags"><span className="mat-tag">Vít</span><span className="mat-tag">Băng Lưới</span><span className="mat-tag">Nẹp Góc</span></div></div>
+          <div className="mat-card"><div className="mat-ico-big">🚚</div><div className="mat-brand">Giao Hàng Toàn TP.HCM</div><div className="mat-name">Mua Sỉ & Lẻ</div><div className="mat-desc">Giá sỉ ưu đãi từ 100m². Giao hàng trong ngày tại TP.HCM, Bình Dương, Long An.</div><div className="mat-tags"><span className="mat-tag">Trong Ngày</span><span className="mat-tag">Giá Sỉ</span><span className="mat-tag">COD</span></div></div>
+        </div>
+      </section>
+
+      {/* PROCESS */}
+      <section id="process">
+        <div style={{ textAlign: 'center' }}>
+          <div className="sec-eyebrow rv" style={{ justifyContent: 'center' }}>Quy Trình</div>
+          <h2 className="sec-title rv d1" style={{ textAlign: 'center' }}>5 Bước Đến Công Trình Hoàn Hảo</h2>
+        </div>
+        <div className="process-grid rv d2">
+          <div className="proc-step"><div className="proc-num">01</div><div className="proc-ico">📞</div><div className="proc-name">Liên Hệ & Tư Vấn</div><div className="proc-desc">Gọi hotline hoặc nhắn Zalo. Tư vấn sơ bộ giải pháp và vật liệu phù hợp.</div></div>
+          <div className="proc-step"><div className="proc-num">02</div><div className="proc-ico">📐</div><div className="proc-name">Khảo Sát Miễn Phí</div><div className="proc-desc">Đội kỹ thuật đến đo đạc, đánh giá thực tế trong 24 giờ. Hoàn toàn miễn phí.</div></div>
+          <div className="proc-step"><div className="proc-num">03</div><div className="proc-ico">📋</div><div className="proc-name">Báo Giá & Ký HĐ</div><div className="proc-desc">Báo giá chi tiết từng hạng mục. Ký hợp đồng cam kết tiến độ & chất lượng.</div></div>
+          <div className="proc-step"><div className="proc-num">04</div><div className="proc-ico">⚒️</div><div className="proc-name">Thi Công Chuyên Nghiệp</div><div className="proc-desc">Đội thợ làm việc đúng tiến độ. Dọn dẹp sạch sẽ hàng ngày, báo cáo tiến độ.</div></div>
+          <div className="proc-step"><div className="proc-num">05</div><div className="proc-ico">✅</div><div className="proc-name">Bàn Giao & Bảo Hành</div><div className="proc-desc">Nghiệm thu kỹ lưỡng. Bảo hành 24 tháng. Hỗ trợ bảo trì trọn đời.</div></div>
+        </div>
+      </section>
+
+      {/* REVIEWS (Cập nhật đọc Đánh Giá động từ tab reviews) */}
+      <section id="reviews">
+        <div className="reviews-head">
+          <div><div className="sec-eyebrow rv">Khách Hàng Nói Gì</div><h2 class="sec-title rv d1">Đánh Giá Thực Tế</h2></div>
+          <div className="rating-big rv">
+            <div className="rating-num">4.9</div>
+            <div className="r-stars">
+              <div className="stars">★★★★★</div>
+              <div className="rating-sub">Dựa trên 200+ đánh giá</div>
+            </div>
+          </div>
+        </div>
+        <div className="reviews-grid rv">
+          {reviews.length > 0 ? (
+            reviews.map((r) => (
+              <div className="review-card" key={r.id}>
+                <div className="review-q">"</div>
+                <div className="review-stars">
+                  {Array(Math.min(5, parseInt(r.stars) || 5)).fill('★').join('')}
+                </div>
+                <p className="review-text">{r.text}</p>
+                <div className="review-author">
+                  <div className="review-av">{r.name ? r.name.slice(0, 2).toUpperCase() : 'KH'}</div>
+                  <div>
+                    <div className="review-name">{r.name}</div>
+                    <div className="review-role">{r.role}</div>
+                    <div className="review-proj">{r.proj}</div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: 'var(--muted)', textAlign: 'center', gridColumn: 'span 3', padding: '2rem' }}>
+              Đang tải danh sách đánh giá khách hàng...
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* WHY */}
+      <section id="why">
+        <div className="why-wrap">
+          <div className="why-visual rv-l">
+            <div className="why-card-main">
+              <div className="why-grid-bg"></div>
+              <div className="why-tag">Cam kết chất lượng</div>
+              <div className="why-big">Tại Sao<br />Chọn<br />ThạchPro?</div>
+            </div>
+            <div className="why-float">
+              <div className="why-float-num">500+</div>
+              <div className="why-float-lbl">Công Trình<br />Hoàn Thành</div>
+            </div>
+          </div>
+          <div className="rv-r">
+            <div className="sec-eyebrow">Điểm Khác Biệt</div>
+            <h2 className="sec-title">Chúng Tôi Cam Kết<br />Điều Này</h2>
+            <div className="why-list">
+              <div className="why-item">
+                <div className="why-check">✓</div>
+                <div>
+                  <div className="why-item-title">Khảo Sát & Tư Vấn Miễn Phí 100%</div>
+                  <div className="why-item-desc">Đội kỹ thuật đến tận nơi đo đạc, tư vấn giải pháp tối ưu. Không mất bất kỳ chi phí nào.</div>
+                </div>
+              </div>
+              <div className="why-item">
+                <div className="why-check">✓</div>
+                <div>
+                  <div className="why-item-title">Báo Giá Trọn Gói Không Phát Sinh</div>
+                  <div className="why-item-desc">Hợp đồng rõ ràng từng hạng mục. Cam kết không phát sinh chi phí ngoài thỏa thuận ban đầu.</div>
+                </div>
+              </div>
+              <div className="why-item">
+                <div className="why-check">✓</div>
+                <div>
+                  <div className="why-item-title">Đội Thợ Được Đào Tạo Bài Bản</div>
+                  <div className="why-item-desc">30+ thợ lành nghề chuyên về thạch cao, được đào tạo kỹ thuật theo tiêu chuẩn Knauf & USG.</div>
+                </div>
+              </div>
+              <div className="why-item">
+                <div className="why-check">✓</div>
+                <div>
+                  <div className="why-item-title">Bảo Hành 24 Tháng Toàn Bộ Hạng Mục</div>
+                  <div className="why-item-desc">Bảo hành dài nhất trong ngành. Hỗ trợ bảo trì sau bảo hành với chi phí ưu đãi.</div>
+                </div>
+              </div>
+              <div className="why-item">
+                <div className="why-check">✓</div>
+                <div>
+                  <div className="why-item-title">Vật Liệu Chính Hãng Có Chứng Nhận</div>
+                  <div className="why-item-desc">Chỉ sử dụng vật liệu có CO/CQ đầy đủ. Đại lý ủy quyền Knauf, USG, Vĩnh Tường.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section id="cta">
+        <div className="cta-inner">
+          <div className="cta-text rv">
+            <h2 dangerouslySetInnerHTML={{ __html: content.cta_title || 'Bắt Đầu Dự Án<br>Của Bạn Hôm Nay' }}></h2>
+            <p dangerouslySetInnerHTML={{ __html: content.cta_desc || 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.' }}></p>
+          </div>
+          <div className="cta-actions rv d2">
+            <a href={`tel:${content.contact_phone || '0901234567'}`} className="btn-cta-dark" dangerouslySetInnerHTML={{ __html: content.cta_btn || '📞 Gọi Ngay: 0901 234 567' }}></a>
+            <div className="cta-phone-big">{content.contact_phone || '0901 234 567'}</div>
+            <div className="cta-time">Thứ 2 – Chủ Nhật · 7:00 – 18:00</div>
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT FORM */}
+      <section id="contact">
+        <div className="sec-eyebrow rv">Liên Hệ</div>
+        <h2 className="sec-title rv d1">Đặt Lịch Khảo Sát<br><em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>Miễn Phí</em></h2>
+        <p className="sec-desc rv d2" style={{ marginBottom: '4rem' }}>Điền form bên dưới — đội kỹ thuật sẽ liên hệ lại trong vòng <strong style={{ color: 'var(--accent)' }}>30 phút</strong> để sắp xếp lịch khảo sát.</p>
+        <div className="contact-wrap rv">
+          <div>
+            <div className="ci-item">
+              <div className="ci-icon">📞</div>
+              <div>
+                <div className="ci-label">Hotline</div>
+                <div className="ci-val">{content.contact_phone || '0901 234 567'}</div>
+                <div className="ci-sub">{content.contact_hours || 'Thứ 2 – Chủ Nhật · 7:00 – 18:00'}</div>
+              </div>
+            </div>
+            <div className="ci-item">
+              <div className="ci-icon">💬</div>
+              <div>
+                <div className="ci-label">Zalo</div>
+                <div className="ci-val">{content.contact_zalo || '0901 234 567'}</div>
+                <div className="ci-sub">Nhắn tin nhận báo giá nhanh trong ngày</div>
+              </div>
+            </div>
+            <div className="ci-item">
+              <div className="ci-icon">📧</div>
+              <div>
+                <div className="ci-label">Email</div>
+                <div className="ci-val">{content.contact_email || 'thachpro@gmail.com'}</div>
+                <div className="ci-sub">Phản hồi trong 2 giờ làm việc</div>
+              </div>
+            </div>
+            <div className="ci-item">
+              <div className="ci-icon">📍</div>
+              <div>
+                <div className="ci-label">Showroom & Văn Phòng</div>
+                <div className="ci-val">{content.contact_address || '123 Nguyễn Văn Linh, Quận 7, TP.HCM'}</div>
+                <div className="ci-sub">TP. Hồ Chí Minh · Gần cầu Kênh Tẻ</div>
+              </div>
+            </div>
+            <div className="ci-item">
+              <div className="ci-icon">🚚</div>
+              <div>
+                <div className="ci-label">Khu Vực Phục Vụ</div>
+                <div className="ci-val">TP.HCM · Bình Dương · Long An</div>
+                <div className="ci-sub">Khảo sát và giao hàng tận nơi miễn phí</div>
+              </div>
+            </div>
+          </div>
+          <div className="contact-form-box">
+            <div className="cf-title">Gửi Yêu Cầu Báo Giá</div>
+            <form onSubmit={handleFormSubmit}>
+              <div className="cf-row">
+                <div className="cf-field">
+                  <label className="cf-label">Họ & Tên *</label>
+                  <input className="cf-input" type="text" placeholder="Nguyễn Văn A" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                </div>
+                <div className="cf-field">
+                  <label className="cf-label">Số Điện Thoại *</label>
+                  <input className="cf-input" type="tel" placeholder="0901 234 567" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} required />
+                </div>
+              </div>
+              <div className="cf-row">
+                <div className="cf-field">
+                  <label className="cf-label">Email</label>
+                  <input className="cf-input" type="email" placeholder="email@gmail.com" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                </div>
+                <div className="cf-field">
+                  <label className="cf-label">Dịch Vụ Quan Tâm</label>
+                  <select className="cf-select" value={formData.service} onChange={e => setFormData({ ...formData, service: e.target.value })}>
+                    <option value="">-- Chọn dịch vụ --</option>
+                    <option>Trần Thạch Cao Phẳng</option>
+                    <option>Trần Giật Cấp</option>
+                    <option>Vách Ngăn Thạch Cao</option>
+                    <option>Phào Chỉ Trang Trí</option>
+                    <option>Bả Bột & Sơn Nước</option>
+                    <option>Mua Vật Liệu Sỉ/Lẻ</option>
+                    <option>Tư Vấn Trọn Gói</option>
+                  </select>
+                </div>
+              </div>
+              <div className="cf-row">
+                <div className="cf-field">
+                  <label className="cf-label">Diện Tích (m²)</label>
+                  <input className="cf-input" type="text" placeholder="VD: 50 m²" value={formData.area} onChange={e => setFormData({ ...formData, area: e.target.value })} />
+                </div>
+                <div className="cf-field">
+                  <label className="cf-label">Địa Điểm Công Trình</label>
+                  <input className="cf-input" type="text" placeholder="Quận / Huyện, TP.HCM" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                </div>
+              </div>
+              <div className="cf-field">
+                <label className="cf-label">Ghi Chú / Yêu Cầu Thêm</label>
+                <textarea className="cf-textarea" placeholder="Mô tả thêm yêu cầu của bạn, thời gian thuận tiện để khảo sát..." value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })}></textarea>
+              </div>
+              <button type="submit" className="cf-submit">📩 Gửi Yêu Cầu Báo Giá</button>
+              <div className="cf-success" id="cf-success">✅ Gửi thành công! Chúng tôi sẽ liên hệ lại trong vòng 30 phút. Cảm ơn bạn đã tin tưởng ThạchPro!</div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* GOOGLE MAPS */}
+      <section id="map-section">
+        <div className="map-wrap">
+          <iframe
+            className="map-frame"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0282977647386!2d106.71720767587655!3d10.732498089396068!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f9ab4c3a6bf%3A0x4a8a7e5db1d31e1!2zTmd1eeG7hW4gVsSDbiBMaW5oLCBRdeG6rW4gNywgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5o!5e0!3m2!1svi!2svn!4v1700000000000"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Vị trí ThạchPro"
+          />
+          <div className="map-card">
+            <div className="map-card-title">📍 <span>ThạchPro</span> Showroom</div>
+            <div className="map-info-row"><span className="map-ico">🏠</span><span>123 Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP.HCM</span></div>
+            <div className="map-info-row"><span className="map-ico">📞</span><span>{content.contact_phone || '0901 234 567'}</span></div>
+            <div className="map-info-row"><span className="map-ico">💖</span><span>7:00 – 18:00 · Thứ 2 – Chủ Nhật</span></div>
+            <div className="map-info-row"><span className="map-ico">🚗</span><span>Có bãi đậu xe miễn phí</span></div>
+            <a href="https://maps.google.com/?q=Nguyễn+Văn+Linh+Quận+7+TP.HCM" target="_blank" rel="noopener noreferrer" className="map-cta-btn">🗺️ Xem Trên Google Maps</a>
+          </div>
+        </div>
+      </section>
+
+      {/* ZALO + PHONE FLOAT */}
+      <div id="zalo-float">
+        <div className="zf-row">
+          <span className="zf-label">Gọi ngay</span>
+          <a href={`tel:${content.contact_phone || '0901234567'}`} className="phone-btn" title="Gọi điện ngay">📞</a>
+        </div>
+        <div className="zf-row">
+          <a href={`https://zalo.me/${content.contact_phone || '0901234567'}`} target="_blank" rel="noopener noreferrer" className="zalo-btn" title="Chat Zalo">
+            <span style={{ background: 'white', color: '#0068FF', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '900', flexShrink: 0 }}>Z</span>
+            Chat Zalo
+          </a>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <footer>
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <a href="#" className="logo-wrap">
+              <div className="logo-icon">🏠</div>
+              <span className="logo-text">Thạch<span>Pro</span></span>
+            </a>
+            <p dangerouslySetInnerHTML={{ __html: content.footer_desc || 'Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.' }}></p>
+            <div className="social-row">
+              <a href="#" className="social-btn">f</a>
+              <a href="#" className="social-btn">Z</a>
+              <a href="#" className="social-btn">▶</a>
+              <a href="#" className="social-btn">♪</a>
+            </div>
+          </div>
+          <div className="footer-col">
+            <h4>Dịch Vụ</h4>
+            <ul>
+              <li><a href="#services">→ Trần Thạch Cao Phẳng</a></li>
+              <li><a href="#services">→ Trần Giật Cấp</a></li>
+              <li><a href="#services">→ Vách Ngăn Nhẹ</a></li>
+              <li><a href="#services">→ Phào Chỉ Trang Trí</a></li>
+              <li><a href="#services">→ Bả Bột & Sơn Nước</a></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4>Vật Liệu</h4>
+            <ul>
+              <li><a href="#materials">→ Tấm Thạch Cao Knauf</a></li>
+              <li><a href="#materials">→ Tấm Thạch Cao USG</a></li>
+              <li><a href="#materials">→ Khung Thép Mạ Kẽm</a></li>
+              <li><a href="#materials">→ Bông Khoáng</a></li>
+              <li><a href="#materials">→ Bột Bả & Sơn Nước</a></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4>Liên Hệ</h4>
+            <div className="fci">
+              <span className="fci-ico">📞</span>
+              <div><strong>{content.contact_phone || '0901 234 567'}</strong><br /><small>{content.contact_hours || 'Hotline 7:00–18:00'}</small></div>
+            </div>
+            <div className="fci">
+              <span className="fci-ico">💬</span>
+              <div>Zalo: {content.contact_zalo || '0901 234 567'}</div>
+            </div>
+            <div className="fci">
+              <span className="fci-ico">📧</span>
+              <div>{content.contact_email || 'thachpro@gmail.com'}</div>
+            </div>
+            <div className="fci">
+              <span className="fci-ico">📍</span>
+              <div>{content.contact_address || '123 Nguyễn Văn Linh, Quận 7, TP.HCM'}</div>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>© 2024 <span>{content.brand_name || 'ThạchPro'}</span>. Tất cả quyền được bảo lưu.</p>
+          <div className="cert-row">
+            <div className="cert-badge">Knauf Partner</div>
+            <div className="cert-badge">USG Authorized</div>
+            <div className="cert-badge">ISO 9001</div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+```
+
+---
+
+### MỤC 4: FILE `src/components/AdminPanel.jsx` (QUẢN LÝ DỰ ÁN & ĐÁNH GIÁ ĐỘNG + TỰ ĐỘNG CROP/NÉN ẢNH)
+*Vui lòng copy toàn bộ đoạn mã React mới hoàn chỉnh dưới đây để thay thế file `AdminPanel.jsx` cũ. Giao diện cũ giữ nguyên 100%, tích hợp nút Upload trực tiếp thông minh:*
+
+```jsx
+// src/components/AdminPanel.jsx
+import React, { useState, useEffect } from 'react';
+import '../AdminPanel.css';
+
+const API = import.meta.env.VITE_API_URL || '';
+const PASS_HASH = import.meta.env.VITE_ADMIN_PASS || '';
+
+const CAT_EMOJI = {
+  'Căn Hộ': '🏙️', 'Văn Phòng': '🏢', 'Biệt Thự': '🏠',
+  'Khách Sạn': '🏨', 'Thương Mại': '🏪', 'Nhà Phố': '🏘️', 'Khác': '🏗️'
+};
+
+// Hàm mã hóa SHA-256 bảo mật một chiều
+const sha256 = async (string) => {
+  const utf8 = new TextEncoder().encode(string);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((bytes) => bytes.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+};
+
+// ══ CONTENT SCHEMA — KHỞI TẠO ĐẦY ĐỦ CHO TOÀN BỘ TEXT TRÊN WEBSITE ══
+const CONTENT_SCHEMA = [
+  {
+    id: 'hero', label: '🎯 Hero — Phần Đầu Trang', open: true,
+    fields: [
+      { key: 'hero_bg', label: 'Ảnh nền Header (Tải tệp trực tiếp dán link vào đây)', type: 'text', default: '' },
+      { key: 'hero_bignum', label: 'Số lớn nền (Bignum)', type: 'text', default: '15' },
+      { key: 'hero_tag', label: 'Badge nhỏ', type: 'text', default: 'Đang nhận dự án — TP.HCM & Bình Dương' },
+      { key: 'hero_title', label: 'Tiêu đề lớn', type: 'textarea', default: 'Kiến Tạo<br>Không Gian<br><em>Hoàn Hảo</em>' },
+      { key: 'hero_sub', label: 'Mô tả ngắn', type: 'textarea', default: 'Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình.' },
+      { key: 'hero_btn1', label: 'Nút 1 (Báo giá)', type: 'text', default: '→ Nhận Báo Giá Miễn Phí' },
+      { key: 'hero_btn2', label: 'Nút 2 (Xem công trình)', type: 'text', default: 'Xem Công Trình →' },
+      { key: 'stat1_num', label: 'Thống kê 1 — Số', type: 'text', default: '500' },
+      { key: 'stat1_lbl', label: 'Thống kê 1 — Nhãn', type: 'text', default: 'Công trình hoàn thành' },
+      { key: 'stat2_num', label: 'Thống kê 2 — Số', type: 'text', default: '15' },
+      { key: 'stat2_lbl', label: 'Thống kê 2 — Nhãn', type: 'text', default: 'Năm kinh nghiệm' },
+      { key: 'stat3_num', label: 'Thống kê 3 — Số', type: 'text', default: '98' },
+      { key: 'stat3_lbl', label: 'Thống kê 3 — Nhãn', type: 'text', default: 'Khách hàng hài lòng' }
+    ]
+  },
+  {
+    id: 'services_sect', label: '🏛️ Trần & Vách — 6 Dịch Vụ', open: false,
+    fields: [
+      { key: 'services_title', label: 'Tiêu đề Dịch Vụ', type: 'text', default: 'Thi Công Toàn Diện<br><em style="font-style:italic;color:var(--accent)">Đúng Chất Lượng</em>' },
+      { key: 'services_desc', label: 'Mô tả chung', type: 'textarea', default: 'Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn.' },
+      // Dịch vụ 1
+      { key: 'svc1_title', label: 'DV1 — Tiêu đề', type: 'text', default: 'Trần Thạch Cao Phẳng' },
+      { key: 'svc1_desc', label: 'DV1 — Mô tả chi tiết', type: 'textarea', default: 'Thi công trần phẳng khung nổi & khung chìm. Bề mặt phẳng mịn tuyệt đối, che đường điện, điều hoà gọn gàng. Phù hợp căn hộ, văn phòng, nhà dân.' },
+      { key: 'svc1_price', label: 'DV1 — Đơn giá hiển thị', type: 'text', default: 'Từ 95.000đ/m²' },
+      // Dịch vụ 2
+      { key: 'svc2_title', label: 'DV2 — Tiêu đề', type: 'text', default: 'Trần Giật Cấp Nghệ Thuật' },
+      { key: 'svc2_desc', label: 'DV2 — Mô tả chi tiết', type: 'textarea', default: 'Thiết kế và thi công trần giật cấp 2–4 tầng, tích hợp hệ đèn LED âm trần, cắt chỉ nổi. Tạo chiều sâu không gian và điểm nhấn sang trọng.' },
+      { key: 'svc2_price', label: 'DV2 — Đơn giá hiển thị', type: 'text', default: 'Từ 145.000đ/m²' },
+      // Dịch vụ 3
+      { key: 'svc3_title', label: 'DV3 — Tiêu đề', type: 'text', default: 'Vách Ngăn Thạch Cao' },
+      { key: 'svc3_desc', label: 'DV3 — Mô tả chi tiết', type: 'textarea', default: 'Vách ngăn khung thép mạ kẽm, tấm thạch cao tiêu chuẩn hoặc chống ẩm. Cách âm, cách nhiệt vượt trội. Linh hoạt bố cục không gian sống.' },
+      { key: 'svc3_price', label: 'DV3 — Đơn giá hiển thị', type: 'text', default: 'Từ 180.000đ/m²' },
+      // Dịch vụ 4
+      { key: 'svc4_title', label: 'DV4 — Tiêu đề', type: 'text', default: 'Phào Chỉ & Trang Trí' },
+      { key: 'svc4_desc', label: 'DV4 — Mô tả chi tiết', type: 'textarea', default: 'Thi công phào chỉ thạch cao ốp tường, trần. Hoa văn cổ điển đến hiện đại, phào góc bo, gờ nổi. Hoàn thiện chi tiết tinh xảo.' },
+      { key: 'svc4_price', label: 'DV4 — Đơn giá hiển thị', type: 'text', default: 'Từ 120.000đ/md' },
+      // Dịch vụ 5
+      { key: 'svc5_title', label: 'DV5 — Tiêu đề', type: 'text', default: 'Bả Bột & Sơn Nước' },
+      { key: 'svc5_desc', label: 'DV5 — Mô tả chi tiết', type: 'textarea', default: 'Bả Matit 2–3 lớp, xử lý bề mặt trơn mịn hoàn hảo. Thi công sơn nước Dulux, Jotun, Kova nội ngoại thất. Màu sắc theo yêu cầu.' },
+      { key: 'svc5_price', label: 'DV5 — Đơn giá hiển thị', type: 'text', default: 'Từ 55.000đ/m²' },
+      // Dịch vụ 6
+      { key: 'svc6_title', label: 'DV6 — Tiêu đề', type: 'text', default: 'Cung Cấp Vật Liệu' },
+      { key: 'svc6_desc', label: 'DV6 — Mô tả chi tiết', type: 'textarea', default: 'Phân phối tấm thạch cao Knauf, USG, Vĩnh Tường; khung thép mạ kẽm; bông khoáng; phụ kiện. Giao tận công trình toàn TP.HCM, Bình Dương.' },
+      { key: 'svc6_price', label: 'DV6 — Đơn giá hiển thị', type: 'text', default: 'Giá sỉ tốt nhất' }
+    ]
+  },
+  {
+    id: 'about', label: '🏆 Về Chúng Tôi', open: false,
+    fields: [
+      { key: 'about_years', label: 'Số năm kinh nghiệm góc', type: 'text', default: '15+' },
+      { key: 'about_title', label: 'Tiêu đề chính', type: 'text', default: 'Hơn 15 Năm Xây Dựng Niềm Tin' },
+      { key: 'about_desc', label: 'Mô tả chi tiết', type: 'textarea', default: 'ThạchPro được thành lập năm 2008, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.' },
+      { key: 'about_feat1_title', label: 'Điểm mạnh 1 — Tiêu đề', type: 'text', default: 'Đội Ngũ Thợ Chuyên Nghiệp' },
+      { key: 'about_feat1_desc', label: 'Điểm mạnh 1 — Nội dung', type: 'textarea', default: '30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG.' },
+      { key: 'about_feat2_title', label: 'Điểm mạnh 2 — Tiêu đề', type: 'text', default: 'Báo Giá Minh Bạch' },
+      { key: 'about_feat2_desc', label: 'Điểm mạnh 2 — Nội dung', type: 'textarea', default: 'Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng hạng mục, vật tư rõ ràng ngay từ đầu.' },
+      { key: 'about_feat3_title', label: 'Điểm mạnh 3 — Tiêu đề', type: 'text', default: 'Tiến Độ Đúng Cam Kết' },
+      { key: 'about_feat3_desc', label: 'Điểm mạnh 3 — Nội dung', type: 'textarea', default: 'Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày, không gây ảnh hưởng đến sinh hoạt.' },
+      { key: 'about_feat4_title', label: 'Điểm mạnh 4 — Tiêu đề', type: 'text', default: 'Bảo Hành 24 Tháng' },
+      { key: 'about_feat4_desc', label: 'Điểm mạnh 4 — Nội dung', type: 'textarea', default: 'Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì miễn phí sau thời gian bảo hành.' }
+    ]
+  },
+  {
+    id: 'why', label: '⭐ Điểm Khác Biệt (Why Us)', open: false,
+    fields: [
+      { key: 'why_title', label: 'Tiêu đề Why Us', type: 'text', default: 'Chúng Tôi Cam Kết<br>Điều Này' },
+      { key: 'why_item1_title', label: 'Cam kết 1 — Tiêu đề', type: 'text', default: 'Khảo Sát & Tư Vấn Miễn Phí 100%' },
+      { key: 'why_item1_desc', label: 'Cam kết 1 — Chi tiết', type: 'textarea', default: 'Đội kỹ thuật đến tận nơi đo đạc, tư vấn giải pháp tối ưu. Không mất bất kỳ chi phí nào.' },
+      { key: 'why_item2_title', label: 'Cam kết 2 — Tiêu đề', type: 'text', default: 'Báo Giá Trọn Gói Không Phát Sinh' },
+      { key: 'why_item2_desc', label: 'Cam kết 2 — Chi tiết', type: 'textarea', default: 'Hợp đồng rõ ràng từng hạng mục. Cam kết không phát sinh chi phí ngoài thỏa thuận ban đầu.' },
+      { key: 'why_item3_title', label: 'Cam kết 3 — Tiêu đề', type: 'text', default: 'Đội Thợ Được Đào Tạo Bài Bản' },
+      { key: 'why_item3_desc', label: 'Cam kết 3 — Chi tiết', type: 'textarea', default: '30+ thợ lành nghề chuyên về thạch cao, được đào tạo kỹ thuật theo tiêu chuẩn Knauf & USG.' },
+      { key: 'why_item4_title', label: 'Cam kết 4 — Tiêu đề', type: 'text', default: 'Bảo Hành 24 Tháng Toàn Bộ Hạng Mục' },
+      { key: 'why_item4_desc', label: 'Cam kết 4 — Chi tiết', type: 'textarea', default: 'Bảo hành dài nhất trong ngành. Hỗ trợ bảo trì sau bảo hành với chi phí ưu đãi.' },
+      { key: 'why_item5_title', label: 'Cam kết 5 — Tiêu đề', type: 'text', default: 'Vật Liệu Chính Hãng Có Chứng Nhận' },
+      { key: 'why_item5_desc', label: 'Cam kết 5 — Chi tiết', type: 'textarea', default: 'Chỉ sử dụng vật liệu có CO/CQ đầy đủ. Đại lý ủy quyền Knauf, USG, Vĩnh Tường.' }
+    ]
+  },
+  {
+    id: 'contact', label: '📞 Thông Tin Liên Hệ', open: false,
+    fields: [
+      { key: 'contact_phone', label: 'Số điện thoại hiển thị', type: 'text', default: '0901 234 567' },
+      { key: 'contact_hours', label: 'Giờ làm việc', type: 'text', default: 'Thứ 2 – Chủ Nhật · 7:00 – 18:00' },
+      { key: 'contact_zalo', label: 'Zalo', type: 'text', default: 'Zalo: 0901 234 567' },
+      { key: 'contact_email', label: 'Email', type: 'text', default: 'thachpro@gmail.com' },
+      { key: 'contact_address', label: 'Địa chỉ hiển thị', type: 'text', default: '123 Nguyễn Văn Linh, Quận 7, TP.HCM' }
+    ]
+  },
+  {
+    id: 'footer', label: '🦶 Footer & Thương Hiệu', open: false,
+    fields: [
+      { key: 'brand_name', label: 'Tên thương hiệu', type: 'text', default: 'ThạchPro' },
+      { key: 'footer_desc', label: 'Mô tả ngắn ở footer', type: 'textarea', default: 'Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.' }
+    ]
+  },
+  {
+    id: 'cta', label: '📢 CTA — Phần Kêu Gọi Hành Động', open: false,
+    fields: [
+      { key: 'cta_title', label: 'Tiêu đề phần CTA', type: 'textarea', default: 'Bắt Đầu Dự Án<br>Của Bạn Hôm Nay' },
+      { key: 'cta_desc', label: 'Mô tả phần CTA', type: 'textarea', default: 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ.' },
+      { key: 'cta_btn', label: 'Chữ trên nút CTA', type: 'text', default: '📞 Gọi Ngay: 0901 234 567' }
+    ]
+  }
+];
+
+export default function AdminPanel({ onNavigateToHome }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState('gallery');
+  const [isHashing, setIsHashing] = useState(false);
+
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [contentData, setContentData] = useState({});
+  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState('#');
+
+  // Modal Gallery State
+  const [gModalOpen, setGModalOpen] = useState(false);
+  const [gModalItem, setGModalItem] = useState({ id: '', title: '', category: '', location: '', size: '', image: '' });
+  const [gModalMode, setGModalMode] = useState('add');
+  const [gModalImgTab, setGModalImgTab] = useState('url');
+  const [driveInput, setDriveInput] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Modal Review State
+  const [rModalOpen, setRModalOpen] = useState(false);
+  const [rModalItem, setRModalItem] = useState({ id: '', name: '', role: '', text: '', proj: '', stars: '5' });
+  const [rModalMode, setRModalMode] = useState('add');
+
+  // Delete Confirm State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState({ id: null, type: '', title: '' }); // type: 'gallery' | 'review'
+
+  // Toast State
+  const [toast, setToast] = useState({ visible: false, msg: '', type: '' });
+
+  // Bảo mật: Tạo mã hóa băm
+  const [hashInput, setHashInput] = useState('');
+  const [generatedHash, setGeneratedHash] = useState('');
+
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem('tp_auth') === '1';
+    if (isAuth) {
+      setIsAuthenticated(true);
+      initAll();
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsaved) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsaved]);
+
+  const initAll = () => {
+    loadGallery();
+    loadContentData();
+    loadContacts();
+    loadReviews();
+  };
+
+  const showToast = (msg, type = '') => {
+    setToast({ visible: true, msg, type });
+    setTimeout(() => setToast({ visible: false, msg: '', type: '' }), 3200);
+  };
+
+  const generateSha256 = async () => {
+    if (!hashInput) return;
+    const res = await sha256(hashInput);
+    setGeneratedHash(res);
+  };
+
+  const doLogin = async () => {
+    setIsHashing(true);
+    await new Promise((r) => setTimeout(r, 500)); 
+    
+    const inputHash = await sha256(password);
+    setIsHashing(false);
+
+    if (inputHash === PASS_HASH || password === PASS_HASH) {
+      sessionStorage.setItem('tp_auth', '1');
+      setIsAuthenticated(true);
+      setErrorVisible(false);
+    } else {
+      setErrorVisible(true);
+      setPassword('');
+    }
+  };
+
+  const doLogout = () => {
+    sessionStorage.removeItem('tp_auth');
+    setIsAuthenticated(false);
+    setPassword('');
+  };
+
+  const loadGallery = async () => {
+    const loadingEl = document.getElementById('g-loading');
+    const tableEl = document.getElementById('g-table');
+    const emptyEl = document.getElementById('g-empty');
+
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (tableEl) tableEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    try {
+      const res = await fetch(API + '?t=' + Date.now());
+      const data = await res.json();
+      const items = data.items || [];
+      setGalleryItems(items);
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (items.length > 0) {
+        if (tableEl) tableEl.style.display = 'table';
+      } else {
+        if (emptyEl) emptyEl.style.display = 'block';
+      }
+    } catch (e) {
+      showToast('❌ Không tải được dữ liệu!', 'error');
+      if (loadingEl) loadingEl.textContent = '⚠️ Lỗi kết nối.';
+    }
+  };
+
+  const loadContentData = async () => {
+    try {
+      const res = await fetch(API + '?type=content&t=' + Date.now());
+      const data = await res.json();
+      if (data.content && data.content.length) {
+        const mapped = {};
+        data.content.forEach(({ key, value }) => { mapped[key] = value; });
+        setContentData(mapped);
+        showToast('✅ Đã tải nội dung hiện tại', 'success');
+      }
+    } catch (e) {
+      showToast('ℹ️ Dùng nội dung mặc định', 'info');
+    }
+  };
+
+  const loadContacts = async () => {
+    const loadingEl = document.getElementById('c-loading');
+    const tableEl = document.getElementById('c-table');
+    const emptyEl = document.getElementById('c-empty');
+
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (tableEl) tableEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    try {
+      const res = await fetch(API + '?type=contacts&t=' + Date.now());
+      const data = await res.json();
+      const list = data.contacts || [];
+      setContacts(list);
+      if (data.sheetUrl) setSheetUrl(data.sheetUrl);
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (list.length > 0) {
+        if (tableEl) tableEl.style.display = 'table';
+      } else {
+        if (emptyEl) emptyEl.style.display = 'block';
+      }
+    } catch (e) {
+      if (loadingEl) loadingEl.textContent = '⚠️ Không tải được. Xem trực tiếp trên Google Sheet.';
+    }
+  };
+
+  const loadReviews = async () => {
+    try {
+      const res = await fetch(API + '?type=reviews&t=' + Date.now());
+      const data = await res.json();
+      setReviews(data.reviews || []);
+    } catch (e) {
+      showToast('❌ Không tải được đánh giá!', 'error');
+    }
+  };
+
+  // NÂNG CẤP: BỘ AUTO-CROP & NÉN ẢNH TRÊN CLIENT SỬ DỤNG CANVAS
+  const handleDirectImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    showToast('⏳ Đang tự động tối ưu hóa và crop ảnh...', 'info');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let targetWidth, targetHeight;
+        const ratio = img.width / img.height;
+        
+        // Nhận dạng khung ngang/dọc/vuông
+        if (ratio > 1.1) {
+          targetWidth = 1200; // Tỷ lệ ngang 3:2 chuẩn mỹ thuật
+          targetHeight = 800;
+        } else if (ratio < 0.9) {
+          targetWidth = 800;  // Tỷ lệ dọc 2:3 chuẩn kiến trúc
+          targetHeight = 1200;
+        } else {
+          targetWidth = 1000; // Tỷ lệ vuông 1:1
+          targetHeight = 1000;
+        }
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        
+        // Tính toán crop căn giữa ảnh (Center Crop)
+        let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+        const targetRatio = targetWidth / targetHeight;
+        
+        if (ratio > targetRatio) {
+          sWidth = img.height * targetRatio;
+          sx = (img.width - sWidth) / 2;
+        } else {
+          sHeight = img.width / targetRatio;
+          sy = (img.height - sHeight) / 2;
+        }
+        
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+        
+        // Nén ảnh JPEG chất lượng cao 85% giúp giảm tải dung lượng vượt trội
+        const base64Compressed = canvas.toDataURL('image/jpeg', 0.85);
+        const base64Clean = base64Compressed.split(',')[1];
+        
+        // Tiến hành tải thẳng lên Google Drive qua Apps Script Web App
+        showToast('☁️ Đang lưu ảnh lên Google Drive...', 'info');
+        try {
+          const response = await fetch(API, {
+            method: 'POST',
+            body: JSON.stringify({
+              type: 'upload_image',
+              filename: 'img_' + Date.now() + '.jpg',
+              contentType: 'image/jpeg',
+              base64: base64Clean
+            })
+          });
+          const resObj = await response.json();
+          if (resObj.success) {
+            showToast('✅ Tải ảnh thành công!', 'success');
+            // Ghép link ảnh mới vào danh sách ảnh (phân tách bởi phím Enter)
+            setGModalItem(prev => {
+              const currentImages = prev.image ? prev.image.trim() : '';
+              const separator = currentImages ? '\n' : '';
+              return { ...prev, image: currentImages + separator + resObj.url };
+            });
+          } else {
+            showToast('❌ Apps Script không lưu được ảnh!', 'error');
+          }
+        } catch (uploadErr) {
+          showToast('❌ Lỗi kết nối Google Drive!', 'error');
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openAddModal = () => {
+    setGModalMode('add');
+    setGModalItem({ id: 'CT' + Date.now(), title: '', category: '', location: '', size: '', image: '' });
+    setGModalImgTab('url');
+    setDriveInput('');
+    setGModalOpen(true);
+  };
+
+  const openEditModal = (item) => {
+    setGModalMode('edit');
+    setGModalItem(item);
+    setGModalImgTab('url');
+    setDriveInput(item.image || ''); 
+    setGModalOpen(true);
+  };
+
+  const openAddReviewModal = () => {
+    setRModalMode('add');
+    setRModalItem({ id: 'RV' + Date.now(), name: '', role: '', text: '', proj: '', stars: '5' });
+    setRModalOpen(true);
+  };
+
+  const openEditReviewModal = (item) => {
+    setRModalMode('edit');
+    setRModalItem(item);
+    setRModalOpen(true);
+  };
+
+  const convDrive = (input) => {
+    setDriveInput(input);
+    const lines = input.split(/[\n,\s]+/);
+    const convertedUrls = [];
+    
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const m1 = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      const m2 = trimmed.match(/id=([a-zA-Z0-9_-]+)/);
+      const id = m1 ? m1[1] : (m2 ? m2[1] : '');
+      if (id) {
+        convertedUrls.push(`https://drive.google.com/uc?export=view&id=${id}`);
+      } else if (trimmed.startsWith('http')) {
+        convertedUrls.push(trimmed);
+      }
+    });
+
+    if (convertedUrls.length > 0) {
+      setGModalItem(prev => ({ ...prev, image: convertedUrls.join('\n') }));
+    }
+  };
+
+  const saveGallery = async () => {
+    if (!gModalItem.title.trim()) { showToast('⚠️ Nhập tiêu đề!', 'error'); return; }
+    if (!gModalItem.category) { showToast('⚠️ Chọn danh mục!', 'error'); return; }
+
+    const btn = document.getElementById('g-save-btn');
+    if (btn) { btn.textContent = '⏳ Đang lưu...'; btn.disabled = true; }
+
+    try {
+      await fetch(API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'gallery_save', ...gModalItem })
+      });
+      showToast('✅ Lưu công trình thành công!', 'success');
+      setGModalOpen(false);
+      loadGallery();
+    } catch (e) {
+      showToast('❌ Lỗi khi lưu!', 'error');
+    } finally {
+      if (btn) { btn.textContent = '💾 Lưu Công Trình'; btn.disabled = false; }
+    }
+  };
+
+  const saveReview = async (e) => {
+    e.preventDefault();
+    if (!rModalItem.name.trim()) { showToast('⚠️ Nhập tên khách hàng!', 'error'); return; }
+    if (!rModalItem.text.trim()) { showToast('⚠️ Nhập nội dung phản hồi!', 'error'); return; }
+
+    const btn = document.getElementById('r-save-btn');
+    if (btn) { btn.textContent = '⏳ Đang lưu...'; btn.disabled = true; }
+
+    try {
+      await fetch(API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'review_save', ...rModalItem })
+      });
+      showToast('✅ Lưu đánh giá thành công!', 'success');
+      setRModalOpen(false);
+      loadReviews();
+    } catch (e) {
+      showToast('❌ Lỗi khi lưu đánh giá!', 'error');
+    } finally {
+      if (btn) { btn.textContent = '💾 Lưu Đánh Giá'; btn.disabled = false; }
+    }
+  };
+
+  const askDelete = (id, type, title) => {
+    setDeleteTarget({ id, type, title });
+    setConfirmOpen(true);
+  };
+
+  const doDelete = async () => {
+    if (!deleteTarget.id) return;
+    setConfirmOpen(false);
+    
+    try {
+      await fetch(API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: deleteTarget.type === 'gallery' ? 'gallery_delete' : 'review_delete', 
+          id: deleteTarget.id 
+        })
+      });
+      showToast('🗑️ Đã xoá thành công!', 'success');
+      if (deleteTarget.type === 'gallery') {
+        loadGallery();
+      } else {
+        loadReviews();
+      }
+    } catch (e) {
+      showToast('❌ Lỗi khi xoá!', 'error');
+    }
+    setDeleteTarget({ id: null, type: '', title: '' });
+  };
+
+  const toggleSection = (id) => {
+    const section = document.getElementById('sf-' + id);
+    const header = document.getElementById('sec-hdr-' + id);
+    if (section && header) {
+      section.classList.toggle('collapsed');
+      header.classList.toggle('open');
+    }
+  };
+
+  const markChanged = (key, val) => {
+    setContentData(prev => ({ ...prev, [key]: val }));
+    const row = document.getElementById('fr-' + key);
+    if (row) row.classList.add('field-changed');
+    setHasUnsaved(true);
+    const badge1 = document.getElementById('unsaved-count');
+    const badge2 = document.getElementById('unsaved-count2');
+    if (badge1) badge1.style.display = 'inline';
+    if (badge2) badge2.style.display = 'inline';
+  };
+
+  const saveAllContent = async () => {
+    const btn = document.querySelector('.btn-save-all');
+    if (btn) btn.textContent = '⏳ Đang lưu...';
+
+    const payload = [];
+    CONTENT_SCHEMA.forEach(sec => {
+      sec.fields.forEach(f => {
+        const val = contentData[f.key] !== undefined ? contentData[f.key] : f.default;
+        payload.push({ key: f.key, value: val.trim() });
+      });
+    });
+
+    try {
+      await fetch(API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'content_save', content: payload })
+      });
+
+      document.querySelectorAll('.field-changed').forEach(el => el.classList.remove('field-changed'));
+      setHasUnsaved(false);
+      const badge1 = document.getElementById('unsaved-count');
+      const badge2 = document.getElementById('unsaved-count2');
+      if (badge1) badge1.style.display = 'none';
+      if (badge2) badge2.style.display = 'none';
+      showToast('✅ Đã lưu tất cả nội dung! Website sẽ cập nhật ngay.', 'success');
+    } catch (e) {
+      showToast('❌ Lỗi khi lưu!', 'error');
+    } finally {
+      if (btn) btn.textContent = '💾 Lưu Tất Cả';
+    }
+  };
+
+  // Lấy ảnh đại diện để hiện trong bảng Admin
+  const getFirstImage = (imageStr) => {
+    if (!imageStr) return '';
+    const list = imageStr.split(/[\s,\n\t]+/).filter(url => url.trim() !== '');
+    return list[0] || '';
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div id="login-screen">
+        <div className="login-box">
+          <div className="login-logo">🏠</div>
+          <div className="login-title">Thạch<span style={{ color: 'var(--accent)' }}>Pro</span> Admin</div>
+          <div className="login-sub">Nhập mật khẩu để tiếp tục</div>
+          <input className="login-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') doLogin(); }} />
+          <button className="login-btn" onClick={doLogin} disabled={isHashing}>
+            {isHashing ? '⏳ Đang băm...' : '🔐 Đăng Nhập'}
+          </button>
+          <div className="login-error" style={{ display: errorVisible ? 'block' : 'none' }}>❌ Mật khẩu không đúng!</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div id="main" style={{ display: 'block' }}>
+      {/* TOPBAR */}
+      <div className="topbar">
+        <div className="topbar-logo">
+          <div className="topbar-icon">🏠</div>
+          <div className="topbar-name">Thạch<span>Pro</span> <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.85rem' }}>/ Admin</span></div>
+        </div>
+        <div className="topbar-right">
+          <button onClick={onNavigateToHome} className="view-btn" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🌐 Xem Website</button>
+          <button className="logout-btn" onClick={doLogout}>Đăng Xuất</button>
+        </div>
+      </div>
+
+      {/* TABS */}
+      <div className="tabs">
+        <div className={`tab ${activeTab === 'gallery' ? 'active' : ''}`} onClick={() => setActiveTab('gallery')}>🖼️ Công Trình</div>
+        <div className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => setActiveTab('content')}>✏️ Nội Dung & Text</div>
+        <div className={`tab ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>📋 Khách Hàng</div>
+        <div className={`tab ${activeTab === 'reviews_tab' ? 'active' : ''}`} onClick={() => setActiveTab('reviews_tab')}>💬 Đánh Giá Khách</div>
+        <div className={`tab ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}>🔐 Bảo Mật</div>
+      </div>
+
+      <div className="content">
+        {/* TAB GALLERY */}
+        <div className={`tab-panel ${activeTab === 'gallery' ? 'active' : ''}`}>
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="stat-ico">🏗️</div>
+              <div><div className="stat-num">{sTotal}</div><div className="stat-lbl">Tổng Công Trình</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-ico">🏙️</div>
+              <div><div className="stat-num">{sApt}</div><div className="stat-lbl">Căn Hộ</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-ico">🏢</div>
+              <div><div className="stat-num">{sOffice}</div><div className="stat-lbl">Văn Phòng</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-ico">🏠</div>
+              <div><div className="stat-num">{sOther}</div><div className="stat-lbl">Biệt Thự & Khác</div></div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-title">Danh Sách Công Trình</div>
+              <div style={{ display: 'flex', gap: '0.7rem' }}>
+                <button className="btn-refresh" onClick={loadGallery}>🔄 Làm Mới</button>
+                <button className="btn-add" onClick={openAddModal}>＋ Thêm Công Trình</button>
+              </div>
+            </div>
+            <div className="table-wrap">
+              <div className="table-loading" id="g-loading">⏳ Đang tải...</div>
+              <table id="g-table" style={{ display: 'none' }}>
+                <thead>
+                  <tr>
+                    <th>Ảnh bìa</th>
+                    <th>Tiêu Đề</th>
+                    <th>Danh Mục</th>
+                    <th>Địa Điểm</th>
+                    <th>Diện Tích</th>
+                    <th>Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {galleryItems.map(item => {
+                    const previewImg = getFirstImage(item.image);
+                    return (
+                      <tr key={item.id}>
+                        <td>
+                          {previewImg ? (
+                            <img className="td-img" src={previewImg} onError={(e) => { e.target.style.display = 'none'; }} alt="" />
+                          ) : null}
+                          <div className="td-img-ph" style={{ display: previewImg ? 'none' : 'flex' }}>
+                            {CAT_EMOJI[item.category] || '🏗️'}
+                          </div>
+                        </td>
+                        <td className="td-title">{item.title}</td>
+                        <td><span className="cat-badge">{CAT_EMOJI[item.category] || ''} {item.category}</span></td>
+                        <td>{item.location || '—'}</td>
+                        <td>{item.size || '—'}</td>
+                        <td>
+                          <div className="action-row">
+                            <button className="btn-edit" onClick={() => openEditModal(item)}>✏️ Sửa</button>
+                            <button className="btn-del" onClick={() => askDelete(item.id, 'gallery', item.title)}>🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <div className="table-empty" id="g-empty" style={{ display: 'none' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '0.8rem' }}>🏗️</div>
+                <div>Chưa có công trình nào. Bấm <strong>＋ Thêm</strong> để bắt đầu.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* TAB CONTENT (SỬA TEXT TOÀN BỘ WEBSITE) */}
+        <div className={`tab-panel ${activeTab === 'content' ? 'active' : ''}`}>
+          <div className="panel" style={{ marginBottom: '1rem' }}>
+            <div className="panel-head">
+              <div className="panel-title">✏️ Chỉnh Sửa Nội Dung Website</div>
+              <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
+                <span className="unsaved-count" id="unsaved-count" style={{ display: 'none' }}>● Có thay đổi chưa lưu</span>
+                <button className="btn-refresh" onClick={loadContentData}>🔄 Tải Lại</button>
+                <button className="btn-save-all" onClick={saveAllContent}>💾 Lưu Tất Cả</button>
+              </div>
+            </div>
+            <div className="panel-desc">Chỉnh sửa bất kỳ vùng chữ nào trên Website → bấm <strong style={{ color: 'var(--accent)' }}>Lưu Tất Cả</strong>. Các thẻ HTML như <code style={{ color: 'var(--accent)' }}>&lt;br&gt;</code> hoặc <code style={{ color: 'var(--accent)' }}>&lt;em&gt;</code> được hỗ trợ.</div>
+          </div>
+
+          <div className="content-sections">
+            {CONTENT_SCHEMA.map(sec => (
+              <div className="section-block" id={`sec-${sec.id}`} key={sec.id}>
+                <div className={`section-header ${sec.open ? 'open' : ''}`} id={`sec-hdr-${sec.id}`} onClick={() => toggleSection(sec.id)}>
+                  <span className="section-header-ico">{sec.label.split(' ')[0]}</span>
+                  <span className="section-header-title">{sec.label.replace(/^[^ ]+ /, '')}</span>
+                  <span className="section-header-arrow">▼</span>
+                </div>
+                <div className={`section-fields ${sec.open ? '' : 'collapsed'}`} id={`sf-${sec.id}`}>
+                  {sec.fields.map(f => (
+                    <div className="field-row" id={`fr-${f.key}`} key={f.key}>
+                      <div>
+                        <div className="field-label">{f.label}</div>
+                        <div className="field-tag">[{f.key}]</div>
+                      </div>
+                      <div>
+                        {f.type === 'textarea' ? (
+                          <textarea className="f-textarea" value={contentData[f.key] !== undefined ? contentData[f.key] : f.default} onChange={e => markChanged(f.key, e.target.value)}></textarea>
+                        ) : (
+                          <input className="f-input" type="text" value={contentData[f.key] !== undefined ? contentData[f.key] : f.default} onChange={e => markChanged(f.key, e.target.value)} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="save-row">
+            <span className="unsaved-count" id="unsaved-count2" style={{ display: 'none' }}>● Có thay đổi chưa lưu</span>
+            <button className="btn-save-all" onClick={saveAllContent} style={{ marginLeft: 'auto' }}>💾 Lưu Tất Cả Thay Đổi</button>
+          </div>
+        </div>
+
+        {/* TAB CONTACTS */}
+        <div className={`tab-panel ${activeTab === 'contacts' ? 'active' : ''}`}>
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-title">📋 Danh Sách Khách Hàng Liên Hệ</div>
+              <div style={{ display: 'flex', gap: '0.7rem' }}>
+                <button className="btn-refresh" onClick={loadContacts}>🔄 Làm Mới</button>
+                <a id="sheet-link" href={sheetUrl} target="_blank" rel="noopener noreferrer" className="btn-add" style={{ textDecoration: 'none' }}>📊 Mở Google Sheet</a>
+              </div>
+            </div>
+            <div className="table-wrap">
+              <div className="table-loading" id="c-loading">⏳ Đang tải...</div>
+              <table id="c-table" style={{ display: 'none' }}>
+                <thead>
+                  <tr>
+                    <th>Thời Gian</th>
+                    <th>Họ Tên</th>
+                    <th>SĐT</th>
+                    <th>Email</th>
+                    <th>Dịch Vụ</th>
+                    <th>Diện Tích</th>
+                    <th>Địa Điểm</th>
+                    <th>Ghi Chú</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map((r, idx) => (
+                    <tr key={idx}>
+                      <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{r[0] || ''}</td>
+                      <td style={{ color: 'var(--text)', fontWeight: 600 }}>{r[1] || ''}</td>
+                      <td><a href={`tel:${r[2]}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{r[2] || ''}</a></td>
+                      <td>{r[3] || ''}</td>
+                      <td><span className="cat-badge">{r[4] || ''}</span></td>
+                      <td>{r[5] || ''}</td>
+                      <td>{r[6] || ''}</td>
+                      <td style={{ maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r[7] || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="table-empty" id="c-empty" style={{ display: 'none' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '0.8rem' }}>📭</div>
+                <div>Chưa có khách hàng nào liên hệ.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BỔ SUNG: TAB QUẢN LÝ ĐÁNH GIÁ (REVIEWS) */}
+        <div className={`tab-panel ${activeTab === 'reviews_tab' ? 'active' : ''}`}>
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-title">💬 Danh Sách Đánh Giá Khách Hàng</div>
+              <div style={{ display: 'flex', gap: '0.7rem' }}>
+                <button className="btn-refresh" onClick={loadReviews}>🔄 Làm Mới</button>
+                <button className="btn-add" onClick={openAddReviewModal}>＋ Thêm Đánh Giá</button>
+              </div>
+            </div>
+            <div className="table-wrap">
+              <table style={{ display: reviews.length > 0 ? 'table' : 'none' }}>
+                <thead>
+                  <tr>
+                    <th>Họ Tên</th>
+                    <th>Chức Vụ</th>
+                    <th>Nội Dung Phản Hồi</th>
+                    <th>Dự Án Đã Làm</th>
+                    <th>Số Sao</th>
+                    <th>Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.map(r => (
+                    <tr key={r.id}>
+                      <td style={{ color: 'var(--text)', fontWeight: 600 }}>{r.name}</td>
+                      <td>{r.role || '—'}</td>
+                      <td style={{ maxWidth: '250px', whiteSpace: 'normal', lineHeight: '1.5' }}>{r.text}</td>
+                      <td style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>{r.proj || '—'}</td>
+                      <td style={{ color: 'var(--accent)' }}>{'★'.repeat(parseInt(r.stars) || 5)}</td>
+                      <td>
+                        <div className="action-row">
+                          <button className="btn-edit" onClick={() => openEditReviewModal(r)}>✏️ Sửa</button>
+                          <button className="btn-del" onClick={() => askDelete(r.id, 'review', r.name)}>🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {reviews.length === 0 && (
+                <div className="table-empty">
+                  <div style={{ fontSize: '3rem', marginBottom: '0.8rem' }}>💬</div>
+                  <div>Chưa có đánh giá nào. Bấm <strong>＋ Thêm Đánh Giá</strong> để bắt đầu.</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* TAB SECURITY */}
+        <div className={`tab-panel ${activeTab === 'security' ? 'active' : ''}`}>
+          <div className="panel">
+            <div className="panel-head">
+              <div className="panel-title">🔐 Bảo Mật — Mã Hóa Mật Khẩu (SHA-256)</div>
+            </div>
+            <div className="panel-desc">Chuẩn hóa bảo mật một chiều, ngăn ngừa kẻ xấu đọc trộm file cấu hình JS ở phía Client.</div>
+            
+            <div style={{ padding: '1.5rem' }}>
+              <div className="field-row">
+                <div>
+                  <div className="field-label">Mật khẩu mới</div>
+                  <div className="field-tag">[SHA-256]</div>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <input 
+                    type="text" 
+                    className="f-input" 
+                    style={{ flex: 1, minWidth: '250px' }}
+                    placeholder="Nhập mật khẩu muốn băm (VD: thachpro2024)" 
+                    value={hashInput} 
+                    onChange={e => setHashInput(e.target.value)} 
+                  />
+                  <button className="btn-add" onClick={generateSha256}>🔑 Tạo Mã Hash</button>
+                </div>
+              </div>
+
+              {generatedHash && (
+                <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--c2)', border: '1px solid var(--line)', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Copy chuỗi này dán vào file .env:</div>
+                  <code style={{ display: 'block', background: 'var(--c3)', padding: '1rem', borderRadius: '6px', fontSize: '0.95rem', wordBreak: 'break-all', fontFamily: 'monospace', color: 'var(--text)', border: '1px solid var(--line)' }}>
+                    {generatedHash}
+                  </code>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '0.8rem' }}>
+                    Copy chuỗi 64 ký tự ở trên, thay thế vào biến <code style={{ color: 'var(--accent)' }}>VITE_ADMIN_PASS</code> trong file <code style={{ color: 'var(--accent)' }}>.env</code> rồi khởi động lại dự án.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* GALLERY MODAL (Hỗ trợ Tải ảnh trực tiếp thông minh & bóc tách crop ảnh) */}
+      <div className={`modal-bg ${gModalOpen ? 'open' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-bg')) setGModalOpen(false); }}>
+        <div className="modal">
+          <button className="modal-close" onClick={() => setGModalOpen(false)}>✕</button>
+          <div className="modal-title">{gModalMode === 'add' ? 'Thêm Công Trình Mới' : '✏️ Sửa Công Trình'}</div>
+          <div className="mf-row">
+            <div className="mf-field">
+              <label className="mf-label">Tiêu Đề *</label>
+              <input className="mf-input" type="text" placeholder="VD: Penthouse Vinhomes" value={gModalItem.title} onChange={e => setGModalItem({ ...gModalItem, title: e.target.value })} />
+            </div>
+            <div className="mf-field">
+              <label className="mf-label">Danh Mục *</label>
+              <select className="mf-select" value={gModalItem.category} onChange={e => setGModalItem({ ...gModalItem, category: e.target.value })}>
+                <option value="">-- Chọn --</option>
+                <option>Căn Hộ</option><option>Văn Phòng</option><option>Biệt Thự</option>
+                <option>Khách Sạn</option><option>Thương Mại</option><option>Nhà Phố</option><option>Khác</option>
+              </select>
+            </div>
+          </div>
+          <div className="mf-row">
+            <div className="mf-field">
+              <label className="mf-label">Địa Điểm</label>
+              <input className="mf-input" type="text" placeholder="VD: Quận 7, TP.HCM" value={gModalItem.location} onChange={e => setGModalItem({ ...gModalItem, location: e.target.value })} />
+            </div>
+            <div className="mf-field">
+              <label className="mf-label">Diện Tích</label>
+              <input className="mf-input" type="text" placeholder="VD: 150 m²" value={gModalItem.size} onChange={e => setGModalItem({ ...gModalItem, size: e.target.value })} />
+            </div>
+          </div>
+          <div className="mf-field">
+            <label className="mf-label">Ảnh Công Trình (Tải tệp trực tiếp tự nén & crop)</label>
+            <div className="img-tabs">
+              <button className={`img-tab ${gModalImgTab === 'url' ? 'active' : ''}`} onClick={() => setGModalImgTab('url')}>🔗 URL Ảnh / Tải trực tiếp</button>
+              <button className={`img-tab ${gModalImgTab === 'drive' ? 'active' : ''}`} onClick={() => setGModalImgTab('drive')}>☁️ Google Drive</button>
+            </div>
+            {gModalImgTab === 'url' ? (
+              <div id="itab-url">
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.8rem' }}>
+                  <input 
+                    type="file" 
+                    id="direct-file-input" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleDirectImageUpload} 
+                    disabled={isUploading}
+                  />
+                  <button 
+                    type="button" 
+                    className="btn-add" 
+                    style={{ width: '100%', height: '40px', justifyContent: 'center' }}
+                    onClick={() => document.getElementById('direct-file-input').click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? '⏳ Đang tải ảnh & nén tự động...' : '📸 Tải tệp trực tiếp từ thiết bị'}
+                  </button>
+                </div>
+                <textarea 
+                  className="mf-textarea" 
+                  placeholder={"Mỗi đường dẫn ảnh một dòng\nhttps://i.imgur.com/anh1.jpg\nhttps://i.imgur.com/anh2.jpg"} 
+                  value={gModalItem.image} 
+                  onChange={e => setGModalItem({ ...gModalItem, image: e.target.value })} 
+                />
+                <div className="img-hint">Mỗi ảnh một dòng. Ảnh dòng đầu tiên sẽ tự động chọn làm ảnh bìa ngoài danh sách.</div>
+              </div>
+            ) : (
+              <div id="itab-drive">
+                <textarea 
+                  className="mf-textarea" 
+                  placeholder={"Dán các link chia sẻ Google Drive tại đây (Mỗi link một dòng)\nhttps://drive.google.com/file/d/abc...\nhttps://drive.google.com/file/d/xyz..."} 
+                  value={driveInput} 
+                  onChange={e => convDrive(e.target.value)} 
+                />
+                <div className="img-hint">Dán danh sách các link Google Drive (Mỗi link một dòng). Hệ thống tự bóc tách ID tự động.</div>
+              </div>
+            )}
+            
+            {getFirstImage(gModalItem.image) && (
+              <div style={{ marginTop: '0.8rem' }}>
+                <span className="mf-label" style={{ fontSize: '0.68rem' }}>Ảnh bìa xem trước:</span>
+                <img className="img-preview show" src={getFirstImage(gModalItem.image)} onError={(e) => { e.target.style.display = 'none'; }} alt="Preview" />
+              </div>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button className="btn-cancel" onClick={() => setGModalOpen(false)}>Huỷ</button>
+            <button className="btn-modal-save" id="g-save-btn" onClick={saveGallery}>💾 Lưu Công Trình</button>
+          </div>
+        </div>
+      </div>
+
+      {/* BỔ SUNG: MODAL ĐÁNH GIÁ (REVIEWS MODAL GỐC) */}
+      <div className={`modal-bg ${rModalOpen ? 'open' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-bg')) setRModalOpen(false); }}>
+        <div className="modal">
+          <button className="modal-close" onClick={() => setRModalOpen(false)}>✕</button>
+          <div className="modal-title">{rModalMode === 'add' ? 'Thêm Phản Hồi Khách Hàng' : '✏️ Sửa Phản Hồi'}</div>
+          <form onSubmit={saveReview}>
+            <div className="mf-row">
+              <div className="mf-field">
+                <label className="mf-label">Họ Tên Khách Hàng *</label>
+                <input className="mf-input" type="text" placeholder="VD: Chị Trần Hồng Nhung" value={rModalItem.name} onChange={e => setRModalItem({ ...rModalItem, name: e.target.value })} required />
+              </div>
+              <div className="mf-field">
+                <label className="mf-label">Chức Vụ / Đại Diện *</label>
+                <input className="mf-input" type="text" placeholder="VD: Chủ căn hộ Vinhomes" value={rModalItem.role} onChange={e => setRModalItem({ ...rModalItem, role: e.target.value })} required />
+              </div>
+            </div>
+            <div className="mf-row">
+              <div className="mf-field">
+                <label className="mf-label">Dự Án Đã Làm</label>
+                <input className="mf-input" type="text" placeholder="VD: 🏠 Căn hộ 450m² · Trần giật cấp" value={rModalItem.proj} onChange={e => setRModalItem({ ...rModalItem, proj: e.target.value })} />
+              </div>
+              <div className="mf-field">
+                <label className="mf-label">Số Sao Đánh Giá *</label>
+                <select className="mf-select" value={rModalItem.stars} onChange={e => setRModalItem({ ...rModalItem, stars: e.target.value })}>
+                  <option value="5">★★★★★ (5 Sao)</option>
+                  <option value="4">★★★★ (4 Sao)</option>
+                  <option value="3">★★★ (3 Sao)</option>
+                </select>
+              </div>
+            </div>
+            <div className="mf-field">
+              <label className="mf-label">Nội Dung Phản Hồi *</label>
+              <textarea className="mf-textarea" placeholder="Nhập nội dung phản hồi tại đây..." value={rModalItem.text} onChange={e => setRModalItem({ ...rModalItem, text: e.target.value })} required />
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={() => setRModalOpen(false)}>Huỷ</button>
+              <button type="submit" className="btn-modal-save" id="r-save-btn">💾 Lưu Đánh Giá</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* CONFIRM DELETE */}
+      <div className={`modal-bg ${confirmOpen ? 'open' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-bg')) setConfirmOpen(false); }}>
+        <div className="modal" style={{ maxWidth: '360px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🗑️</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.6rem' }}>Xoá Công Trình?</div>
+          <div style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.7, marginBottom: '1.5rem' }}>Xoá "{deleteTarget.title}"? Không thể hoàn tác.</div>
+          <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center' }}>
+            <button className="btn-cancel" onClick={() => setConfirmOpen(false)}>Huỷ</button>
+            <button style={{ background: 'var(--red)', color: 'white', border: 'none', padding: '0.8rem 2rem', borderRadius: '8px', fontFamily: "'Be Vietnam Pro', sans-serif", fontWeight: 700 }} onClick={doDelete}>🗑️ Xoá</button>
+          </div>
+        </div>
+      </div>
+
+      {/* TOAST */}
+      <div id="toast" className={`${toast.visible ? 'show' : ''} ${toast.type}`}>
+        {toast.msg}
+      </div>
+    </div>
+  );
+}
+```
